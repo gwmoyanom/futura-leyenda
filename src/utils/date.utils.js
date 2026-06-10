@@ -30,6 +30,20 @@ export function formatKickoff(isoString) {
 }
 
 /**
+ * Formats a kickoff time in a fixed UTC-05:00 offset.
+ */
+export function formatKickoffTimeUtc05(isoString) {
+  const date = new Date(isoString)
+  if (Number.isNaN(date.getTime())) return ''
+
+  const utc05 = new Date(date.getTime() - 5 * 60 * 60 * 1000)
+  const hours = String(utc05.getUTCHours()).padStart(2, '0')
+  const minutes = String(utc05.getUTCMinutes()).padStart(2, '0')
+
+  return `${hours}:${minutes}`
+}
+
+/**
  * Returns a human-readable distance like "en 3 horas" or "hace 2 días"
  */
 export function timeFromNow(isoString) {

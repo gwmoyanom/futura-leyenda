@@ -191,9 +191,9 @@ function MatchesSection({ matches }) {
               <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 pb-2 border-b border-gray-100 capitalize">
                 {formatDateLabel(dateKey)}
               </h3>
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
                 {grouped[dateKey].map(match => (
-                  <MatchCard key={match.id} match={match} mode="view" />
+                  <MatchCard key={match.id} match={match} mode="view" compact />
                 ))}
               </div>
             </div>

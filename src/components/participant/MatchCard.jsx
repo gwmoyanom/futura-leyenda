@@ -13,7 +13,12 @@ import { useState } from 'react'
 import clsx from 'clsx'
 import { Badge } from '@/components/ui/index.jsx'
 import Button from '@/components/ui/Button.jsx'
-import { formatKickoff, getCountdown, isPredictionLocked } from '@/utils/date.utils.js'
+import {
+  formatKickoff,
+  formatKickoffTimeUtc05,
+  getCountdown,
+  isPredictionLocked,
+} from '@/utils/date.utils.js'
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
 
@@ -25,18 +30,31 @@ function StatusBadge({ status }) {
 
 // ─── Score display ────────────────────────────────────────────────────────────
 
-function ScoreDisplay({ result, kickoff, status }) {
+function ScoreDisplay({ result, kickoff, status, compact = false, showKickoffTime = false }) {
   const countdown = getCountdown(kickoff)
 
   if (status === 'live' || status === 'finished') {
     return (
-      <div className="flex items-center justify-center gap-3">
-        <span className="font-display text-4xl font-bold text-navy">
+      <div className={clsx('flex items-center justify-center', compact ? 'gap-2' : 'gap-3')}>
+        <span className={clsx('font-display font-bold text-navy', compact ? 'text-2xl' : 'text-4xl')}>
           {result?.home ?? '?'}
         </span>
-        <span className="text-gray-400 font-display text-2xl">–</span>
-        <span className="font-display text-4xl font-bold text-navy">
+        <span className={clsx('text-gray-400 font-display', compact ? 'text-lg' : 'text-2xl')}>–</span>
+        <span className={clsx('font-display font-bold text-navy', compact ? 'text-2xl' : 'text-4xl')}>
           {result?.away ?? '?'}
+        </span>
+      </div>
+    )
+  }
+
+  if (showKickoffTime) {
+    return (
+      <div className="text-center leading-none">
+        <span className={clsx('font-display font-semibold text-gold', compact ? 'text-xl' : 'text-2xl')}>
+          {formatKickoffTimeUtc05(kickoff)}
+        </span>
+        <span className="block mt-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+          UTC-05
         </span>
       </div>
     )
@@ -143,11 +161,13 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
 
 // ─── Team display ─────────────────────────────────────────────────────────────
 
-function Team({ team, align = 'left' }) {
+function Team({ team, align = 'left', compact = false }) {
   return (
     <div className={clsx('flex flex-col items-center', align === 'right' && 'items-center')}>
-      <span className="text-3xl">{team.flag}</span>
-      <span className="text-xs font-medium text-gray-600 mt-1 font-body">{team.code}</span>
+      <span className={clsx(compact ? 'text-2xl' : 'text-3xl')}>{team.flag}</span>
+      <span className={clsx('font-medium text-gray-600 mt-1 font-body', compact ? 'text-[11px]' : 'text-xs')}>
+        {team.code}
+      </span>
     </div>
   )
 }
@@ -161,6 +181,7 @@ function Team({ team, align = 'left' }) {
  * @param {number}   [pointsEarned]    - points awarded (predict mode)
  * @param {function} [onSave]          - callback when prediction is saved
  * @param {function} [onAdminSave]     - callback when admin updates score
+ * @param {boolean}  [compact]         - denser card for landing page lists
  */
 export default function MatchCard({
   match,
@@ -169,6 +190,7 @@ export default function MatchCard({
   pointsEarned = null,
   onSave,
   onAdminSave,
+  compact = false,
 }) {
   const isLocked = isPredictionLocked(match.kickoff)
 
@@ -181,22 +203,30 @@ export default function MatchCard({
       )}
     >
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-2.5 border-b border-gray-100 bg-gray-50/50 rounded-t-card">
-        <span className="text-xs text-gray-400 font-body">
+      <div className={clsx(
+        'flex items-center justify-between border-b border-gray-100 bg-gray-50/50 rounded-t-card',
+        compact ? 'px-3 py-1.5' : 'px-4 py-2.5'
+      )}>
+        <span className={clsx('text-gray-400 font-body truncate pr-2', compact ? 'text-[11px]' : 'text-xs')}>
           Grupo {match.group} · {match.venue?.split(',')[1]?.trim() ?? match.venue}
         </span>
         <StatusBadge status={match.status} />
       </div>
 
       {/* Match */}
-      <div className="px-4 py-4 grid grid-cols-3 items-center gap-2">
-        <Team team={match.homeTeam} />
+      <div className={clsx(
+        'grid grid-cols-3 items-center gap-2',
+        compact ? 'px-3 py-3 min-h-[82px]' : 'px-4 py-4'
+      )}>
+        <Team team={match.homeTeam} compact={compact} />
 
         <div className="flex flex-col items-center gap-2">
           <ScoreDisplay
             result={match.result}
             kickoff={match.kickoff}
             status={match.status}
+            compact={compact}
+            showKickoffTime={mode === 'view'}
           />
           {!isLocked && mode !== 'view' && (
             <span className="text-xs text-gray-400 font-body">
@@ -205,7 +235,7 @@ export default function MatchCard({
           )}
         </div>
 
-        <Team team={match.awayTeam} align="right" />
+        <Team team={match.awayTeam} align="right" compact={compact} />
       </div>
 
       {/* Points earned indicator */}
