@@ -82,7 +82,7 @@ export async function register({ username, displayName, email, password }) {
     throw new Error('Ese nombre de usuario ya está en uso')
   }
 
-  const newUser = registerUser({
+  const newUser = await registerUser({
     username,
     displayName,
     email,

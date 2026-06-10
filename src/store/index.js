@@ -95,7 +95,7 @@ const useStore = create((set, get) => ({
   },
 
   /** Save a prediction for the current user */
-  savePrediction: (matchId, prediction) => {
+  savePrediction: async (matchId, prediction) => {
     const { currentUser, predictions, isPredictionLocked } = get()
     if (!currentUser) return
 
@@ -105,7 +105,7 @@ const useStore = create((set, get) => ({
       return null
     }
 
-    const updated = storageSavePrediction(currentUser.id, matchId, prediction)
+    const updated = await storageSavePrediction(currentUser.id, matchId, prediction)
 
     // Update local state immediately (optimistic update)
     const existingIndex = predictions.findIndex(
@@ -193,10 +193,10 @@ const useStore = create((set, get) => ({
   },
 
   /** Admin: approve or ban a user */
-  adminUpdateUser: (userId, updates) => {
-    storageUpdateUser(userId, updates)
-    // Refresh users list
-    getUsers().then(users => set({ users }))
+  adminUpdateUser: async (userId, updates) => {
+    await storageUpdateUser(userId, updates)
+    const users = await getUsers()
+    set({ users })
   },
 }))
 
