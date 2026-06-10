@@ -19,24 +19,24 @@ const ROUND_BY_PREFIX = {
   third: 4,
 }
 const PLACEHOLDER = { name: '___', code: '---', flag: '', placeholder: true }
-const BOX = { width: 112, height: 59 }
-const BOARD = { width: 1160, height: 760 }
+const BOX = { width: 92, height: 55 }
+const BOARD = { width: 1000, height: 710 }
 const X = {
   leftR32: 0,
-  leftR16: 128,
-  leftQf: 256,
-  leftSf: 384,
-  center: 508,
-  rightSf: 664,
-  rightQf: 792,
-  rightR16: 920,
-  rightR32: 1048,
+  leftR16: 108,
+  leftQf: 216,
+  leftSf: 324,
+  center: 428,
+  rightSf: 584,
+  rightQf: 692,
+  rightR16: 800,
+  rightR32: 908,
 }
 const Y = {
-  r32: [70, 155, 240, 325, 410, 495, 580, 665],
-  r16: [112, 282, 452, 622],
-  qf: [197, 537],
-  sf: [367],
+  r32: [56, 136, 216, 296, 376, 456, 536, 616],
+  r16: [96, 256, 416, 576],
+  qf: [176, 496],
+  sf: [336],
 }
 
 function withMeta(team, group, position) {
@@ -113,7 +113,7 @@ function TeamButton({ team, enabled, selected, faded, onClick }) {
       disabled={!enabled || isPlaceholder}
       onClick={onClick}
       className={clsx(
-        'flex h-7 w-full items-center gap-2 rounded-md border px-2 text-xs transition-colors',
+        'flex h-6 w-full items-center gap-1.5 rounded-md border px-2 text-xs transition-colors',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/40',
         selected && 'border-gold bg-gold/10 text-navy shadow-gold-sm',
         !selected && !faded && !isPlaceholder && 'border-gray-300 bg-white text-navy hover:border-gold',
@@ -128,14 +128,9 @@ function TeamButton({ team, enabled, selected, faded, onClick }) {
       )}>
         {team?.flag || ''}
       </span>
-      <span className="min-w-0 flex-1 truncate text-left font-medium">
-        {isPlaceholder ? '___' : team.name}
+      <span className="min-w-0 flex-1 truncate text-left font-medium" title={isPlaceholder ? '' : team.name}>
+        {isPlaceholder ? '___' : team.code}
       </span>
-      {!isPlaceholder && (
-        <span className="shrink-0 text-[10px] font-semibold text-gray-400">
-          {team.group ? `${team.group}${team.groupPosition}` : team.code}
-        </span>
-      )}
     </button>
   )
 }
@@ -145,7 +140,7 @@ function MatchBox({ match, picks, onPick, className = '', style }) {
   const selectedCode = picks[match.id]
 
   return (
-    <div className={clsx('relative w-[112px] space-y-1', className)} style={style}>
+    <div className={clsx('relative w-[92px] space-y-1', className)} style={style}>
       <TeamButton
         team={match.home ?? PLACEHOLDER}
         enabled={enabled}
@@ -166,8 +161,8 @@ function MatchBox({ match, picks, onPick, className = '', style }) {
 
 function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
   return (
-    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 46 }}>
-      <div className="mb-8 h-32 text-center">
+    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 36 }}>
+      <div className="mb-7 h-28 text-center">
         {champion ? (
           <div>
             <div className="text-2xl">{champion.flag}</div>
@@ -373,12 +368,12 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
             {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, Y.r32, Y.r16, 'left', picks)}
             {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, Y.r16, Y.qf, 'left', picks)}
             {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, Y.qf, Y.sf, 'left', picks)}
-            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [247], 'left', picks)}
+            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [232], 'left', picks)}
 
             {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, Y.r32, Y.r16, 'right', picks)}
             {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, Y.r16, Y.qf, 'right', picks)}
             {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, Y.qf, Y.sf, 'right', picks)}
-            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [247], 'right', picks)}
+            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [232], 'right', picks)}
           </svg>
 
           <Label x={X.leftR32}>{ROUND_LABELS[0]}</Label>
