@@ -66,7 +66,31 @@ values
   ('m045', 'group', 'K', '{"name":"Portugal","code":"POR","flag":"🇵🇹"}'::jsonb, '{"name":"Uzbekistán","code":"UZB","flag":"🇺🇿"}'::jsonb, '2026-06-23T13:00:00-05:00', 'Estadio Houston, EE.UU.', null, 'upcoming'),
   ('m046', 'group', 'L', '{"name":"Inglaterra","code":"ENG","flag":"🏴󠁧󠁢󠁥󠁮󠁧󠁿"}'::jsonb, '{"name":"Ghana","code":"GHA","flag":"🇬🇭"}'::jsonb, '2026-06-23T16:00:00-04:00', 'Estadio Boston, EE.UU.', null, 'upcoming'),
   ('m047', 'group', 'L', '{"name":"Panamá","code":"PAN","flag":"🇵🇦"}'::jsonb, '{"name":"Croacia","code":"CRO","flag":"🇭🇷"}'::jsonb, '2026-06-23T19:00:00-04:00', 'Estadio Toronto, Canadá', null, 'upcoming'),
-  ('m048', 'group', 'K', '{"name":"Colombia","code":"COL","flag":"🇨🇴"}'::jsonb, '{"name":"Jamaica","code":"JAM","flag":"🇯🇲"}'::jsonb, '2026-06-23T22:00:00-06:00', 'Estadio Guadalajara, Zapopan, México', null, 'upcoming')
+  ('m048', 'group', 'K', '{"name":"Colombia","code":"COL","flag":"🇨🇴"}'::jsonb, '{"name":"Jamaica","code":"JAM","flag":"🇯🇲"}'::jsonb, '2026-06-23T22:00:00-06:00', 'Estadio Guadalajara, Zapopan, México', null, 'upcoming'),
+  ('m049', 'group', 'B', '{"name":"Suiza","code":"SUI","flag":"🇨🇭"}'::jsonb, '{"name":"Canadá","code":"CAN","flag":"🇨🇦"}'::jsonb, '2026-06-24T15:00:00-07:00', 'BC Place, Vancouver, Canadá', null, 'upcoming'),
+  ('m050', 'group', 'B', '{"name":"Bosnia","code":"BIH","flag":"🇧🇦"}'::jsonb, '{"name":"Catar","code":"QAT","flag":"🇶🇦"}'::jsonb, '2026-06-24T15:00:00-07:00', 'Estadio Seattle, EE.UU.', null, 'upcoming'),
+  ('m051', 'group', 'C', '{"name":"Escocia","code":"SCO","flag":"🏴󠁧󠁢󠁳󠁣󠁴󠁿"}'::jsonb, '{"name":"Brasil","code":"BRA","flag":"🇧🇷"}'::jsonb, '2026-06-24T18:00:00-04:00', 'Estadio Miami, EE.UU.', null, 'upcoming'),
+  ('m052', 'group', 'C', '{"name":"Marruecos","code":"MAR","flag":"🇲🇦"}'::jsonb, '{"name":"Haití","code":"HAI","flag":"🇭🇹"}'::jsonb, '2026-06-24T18:00:00-04:00', 'Estadio Atlanta, EE.UU.', null, 'upcoming'),
+  ('m053', 'group', 'A', '{"name":"Chequia","code":"CZE","flag":"🇨🇿"}'::jsonb, '{"name":"México","code":"MEX","flag":"🇲🇽"}'::jsonb, '2026-06-24T21:00:00-06:00', 'Estadio Ciudad de México, México', null, 'upcoming'),
+  ('m054', 'group', 'A', '{"name":"Sudáfrica","code":"RSA","flag":"🇿🇦"}'::jsonb, '{"name":"Corea del Sur","code":"KOR","flag":"🇰🇷"}'::jsonb, '2026-06-24T21:00:00-06:00', 'Estadio Monterrey, México', null, 'upcoming'),
+  ('m055', 'group', 'E', '{"name":"Ecuador","code":"ECU","flag":"🇪🇨"}'::jsonb, '{"name":"Alemania","code":"GER","flag":"🇩🇪"}'::jsonb, '2026-06-25T16:00:00-04:00', 'Estadio Nueva York-Nueva Jersey, EE.UU.', null, 'upcoming'),
+  ('m056', 'group', 'E', '{"name":"Curazao","code":"CUW","flag":"🇨🇼"}'::jsonb, '{"name":"Costa de Marfil","code":"CIV","flag":"🇨🇮"}'::jsonb, '2026-06-25T16:00:00-04:00', 'Estadio Filadelfia, EE.UU.', null, 'upcoming'),
+  ('m057', 'group', 'F', '{"name":"Japón","code":"JPN","flag":"🇯🇵"}'::jsonb, '{"name":"Ucrania","code":"UKR","flag":"🇺🇦"}'::jsonb, '2026-06-25T19:00:00-05:00', 'Estadio Dallas, EE.UU.', null, 'upcoming'),
+  ('m058', 'group', 'F', '{"name":"Túnez","code":"TUN","flag":"🇹🇳"}'::jsonb, '{"name":"Países Bajos","code":"NED","flag":"🇳🇱"}'::jsonb, '2026-06-25T19:00:00-05:00', 'Estadio Kansas City, EE.UU.', null, 'upcoming'),
+  ('m059', 'group', 'D', '{"name":"Turquía","code":"TUR","flag":"🇹🇷"}'::jsonb, '{"name":"EE.UU.","code":"USA","flag":"🇺🇸"}'::jsonb, '2026-06-25T22:00:00-07:00', 'Estadio Los Ángeles, EE.UU.', null, 'upcoming'),
+  ('m060', 'group', 'D', '{"name":"Paraguay","code":"PAR","flag":"🇵🇾"}'::jsonb, '{"name":"Australia","code":"AUS","flag":"🇦🇺"}'::jsonb, '2026-06-25T22:00:00-07:00', 'Estadio San Francisco, EE.UU.', null, 'upcoming'),
+  ('m061', 'group', 'I', '{"name":"Noruega","code":"NOR","flag":"🇳🇴"}'::jsonb, '{"name":"Francia","code":"FRA","flag":"🇫🇷"}'::jsonb, '2026-06-26T15:00:00-04:00', 'Estadio Boston, EE.UU.', null, 'upcoming'),
+  ('m062', 'group', 'I', '{"name":"Senegal","code":"SEN","flag":"🇸🇳"}'::jsonb, '{"name":"Iraq","code":"IRQ","flag":"🇮🇶"}'::jsonb, '2026-06-26T15:00:00-04:00', 'Estadio Toronto, Canadá', null, 'upcoming'),
+  ('m063', 'group', 'H', '{"name":"Cabo Verde","code":"CPV","flag":"🇨🇻"}'::jsonb, '{"name":"Arabia Saudita","code":"KSA","flag":"🇸🇦"}'::jsonb, '2026-06-26T20:00:00-05:00', 'Estadio Houston, EE.UU.', null, 'upcoming'),
+  ('m064', 'group', 'H', '{"name":"Uruguay","code":"URU","flag":"🇺🇾"}'::jsonb, '{"name":"España","code":"ESP","flag":"🇪🇸"}'::jsonb, '2026-06-26T20:00:00-06:00', 'Estadio Guadalajara, Zapopan, México', null, 'upcoming'),
+  ('m065', 'group', 'G', '{"name":"Egipto","code":"EGY","flag":"🇪🇬"}'::jsonb, '{"name":"Irán","code":"IRN","flag":"🇮🇷"}'::jsonb, '2026-06-26T23:00:00-07:00', 'Estadio Seattle, EE.UU.', null, 'upcoming'),
+  ('m066', 'group', 'G', '{"name":"Nueva Zelanda","code":"NZL","flag":"🇳🇿"}'::jsonb, '{"name":"Bélgica","code":"BEL","flag":"🇧🇪"}'::jsonb, '2026-06-26T23:00:00-07:00', 'BC Place, Vancouver, Canadá', null, 'upcoming'),
+  ('m067', 'group', 'L', '{"name":"Panamá","code":"PAN","flag":"🇵🇦"}'::jsonb, '{"name":"Inglaterra","code":"ENG","flag":"🏴󠁧󠁢󠁥󠁮󠁧󠁿"}'::jsonb, '2026-06-27T17:00:00-04:00', 'Estadio Nueva York-Nueva Jersey, EE.UU.', null, 'upcoming'),
+  ('m068', 'group', 'L', '{"name":"Croacia","code":"CRO","flag":"🇭🇷"}'::jsonb, '{"name":"Ghana","code":"GHA","flag":"🇬🇭"}'::jsonb, '2026-06-27T17:00:00-04:00', 'Estadio Filadelfia, EE.UU.', null, 'upcoming'),
+  ('m069', 'group', 'K', '{"name":"Colombia","code":"COL","flag":"🇨🇴"}'::jsonb, '{"name":"Portugal","code":"POR","flag":"🇵🇹"}'::jsonb, '2026-06-27T19:30:00-04:00', 'Estadio Miami, EE.UU.', null, 'upcoming'),
+  ('m070', 'group', 'K', '{"name":"Jamaica","code":"JAM","flag":"🇯🇲"}'::jsonb, '{"name":"Uzbekistán","code":"UZB","flag":"🇺🇿"}'::jsonb, '2026-06-27T19:30:00-04:00', 'Estadio Atlanta, EE.UU.', null, 'upcoming'),
+  ('m071', 'group', 'J', '{"name":"Argelia","code":"ALG","flag":"🇩🇿"}'::jsonb, '{"name":"Austria","code":"AUT","flag":"🇦🇹"}'::jsonb, '2026-06-27T22:00:00-05:00', 'Estadio Kansas City, EE.UU.', null, 'upcoming'),
+  ('m072', 'group', 'J', '{"name":"Jordania","code":"JOR","flag":"🇯🇴"}'::jsonb, '{"name":"Argentina","code":"ARG","flag":"🇦🇷"}'::jsonb, '2026-06-27T22:00:00-05:00', 'Estadio Dallas, EE.UU.', null, 'upcoming')
 on conflict (id) do update set
   phase = excluded.phase,
   group_name = excluded.group_name,
@@ -129,5 +153,6 @@ values (
 on conflict (key) do update set
   value = excluded.value,
   updated_at = now();
+
 
 
