@@ -7,6 +7,7 @@
 
 import {
   format,
+  parse,
   formatDistanceToNow,
   isPast,
   isFuture,
@@ -14,6 +15,10 @@ import {
   differenceInHours,
 } from 'date-fns'
 import { es } from 'date-fns/locale'
+
+function getIsoDateKey(isoString) {
+  return isoString?.slice(0, 10)
+}
 
 /**
  * Formats a kickoff time as a readable date string
@@ -73,7 +78,7 @@ export function getCountdown(kickoffIso) {
  */
 export function groupMatchesByDate(matches) {
   return matches.reduce((groups, match) => {
-    const dateKey = format(new Date(match.kickoff), 'yyyy-MM-dd')
+    const dateKey = getIsoDateKey(match.kickoff)
     if (!groups[dateKey]) groups[dateKey] = []
     groups[dateKey].push(match)
     return groups
@@ -84,7 +89,7 @@ export function groupMatchesByDate(matches) {
  * Formats a date key (yyyy-MM-dd) as a display label: "Lunes 14 de Junio"
  */
 export function formatDateLabel(dateKey) {
-  return format(new Date(dateKey), "EEEE d 'de' MMMM", { locale: es })
+  return format(parse(dateKey, 'yyyy-MM-dd', new Date()), "EEEE d 'de' MMMM", { locale: es })
 }
 
 /**
