@@ -20,6 +20,24 @@ function getIsoDateKey(isoString) {
   return isoString?.slice(0, 10)
 }
 
+function getUtc05Date(isoString) {
+  const date = new Date(isoString)
+  if (Number.isNaN(date.getTime())) return null
+
+  return new Date(date.getTime() - 5 * 60 * 60 * 1000)
+}
+
+function getUtc05DateKey(isoString) {
+  const date = getUtc05Date(isoString)
+  if (!date) return getIsoDateKey(isoString)
+
+  const year = date.getUTCFullYear()
+  const month = String(date.getUTCMonth() + 1).padStart(2, '0')
+  const day = String(date.getUTCDate()).padStart(2, '0')
+
+  return `${year}-${month}-${day}`
+}
+
 /**
  * Formats a kickoff time as a readable date string
  * e.g. "Sábado 14 Jun, 18:00"
@@ -33,10 +51,9 @@ export function formatKickoff(isoString) {
  * Formats a kickoff time in a fixed UTC-05:00 offset.
  */
 export function formatKickoffTimeUtc05(isoString) {
-  const date = new Date(isoString)
-  if (Number.isNaN(date.getTime())) return ''
+  const utc05 = getUtc05Date(isoString)
+  if (!utc05) return ''
 
-  const utc05 = new Date(date.getTime() - 5 * 60 * 60 * 1000)
   const hours = String(utc05.getUTCHours()).padStart(2, '0')
   const minutes = String(utc05.getUTCMinutes()).padStart(2, '0')
 
@@ -92,7 +109,7 @@ export function getCountdown(kickoffIso) {
  */
 export function groupMatchesByDate(matches) {
   return matches.reduce((groups, match) => {
-    const dateKey = getIsoDateKey(match.kickoff)
+    const dateKey = getUtc05DateKey(match.kickoff)
     if (!groups[dateKey]) groups[dateKey] = []
     groups[dateKey].push(match)
     return groups

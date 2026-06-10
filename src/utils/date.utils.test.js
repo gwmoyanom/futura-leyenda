@@ -2,20 +2,20 @@ import { describe, expect, it } from 'vitest'
 import { formatDateLabel, formatKickoffTimeUtc05, groupMatchesByDate } from './date.utils.js'
 
 describe('date utils', () => {
-  it('groups matches by the kickoff calendar date without timezone shifting', () => {
+  it('groups matches by the UTC-05 kickoff calendar date', () => {
     const grouped = groupMatchesByDate([
       {
-        id: 'm008',
-        kickoff: '2026-06-14T00:00:00-07:00',
+        id: 'late-thursday-in-ecuador',
+        kickoff: '2026-06-12T02:00:00Z',
       },
       {
-        id: 'm032',
-        kickoff: '2026-06-20T00:00:00-07:00',
+        id: 'early-friday-in-ecuador',
+        kickoff: '2026-06-12T08:00:00-04:00',
       },
     ])
 
-    expect(Object.keys(grouped)).toEqual(['2026-06-14', '2026-06-20'])
-    expect(grouped['2026-06-14'][0].id).toBe('m008')
+    expect(Object.keys(grouped)).toEqual(['2026-06-11', '2026-06-12'])
+    expect(grouped['2026-06-11'][0].id).toBe('late-thursday-in-ecuador')
   })
 
   it('formats date keys as calendar dates without UTC backshift', () => {
