@@ -28,7 +28,9 @@ export default function PredictionsPage() {
     error,
     loadAll,
     savePrediction,
+    saveBracketResults,
     getMyPredictions,
+    getMyBracketResults,
     getMyScore,
     isPredictionLocked,
   } = useStore()
@@ -38,6 +40,7 @@ export default function PredictionsPage() {
   }, [loadAll])
 
   const myPredictions = getMyPredictions()
+  const myBracketResults = getMyBracketResults()
   const { totalPoints } = getMyScore()
   const isLocked = isPredictionLocked()
   const lockCountdown = config?.tournament?.inaugurationDate 
@@ -152,6 +155,8 @@ export default function PredictionsPage() {
           <KnockoutBracket
             matches={matches}
             predictions={myPredictions}
+            bracketResults={myBracketResults}
+            onSave={saveBracketResults}
           />
         </div>
       )}

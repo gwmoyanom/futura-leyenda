@@ -9,7 +9,17 @@
 
 import { create } from 'zustand'
 import { getSession, clearSession, login as authLogin, register as authRegister } from '@/services/auth.service.js'
-import { getMatches, getUsers, getPredictions, getConfig, savePrediction as storageSavePrediction, updateMatch as storageUpdateMatch, updateUser as storageUpdateUser } from '@/services/storage.service.js'
+import {
+  getMatches,
+  getUsers,
+  getPredictions,
+  getConfig,
+  getBracketResults,
+  saveBracketResults as storageSaveBracketResults,
+  savePrediction as storageSavePrediction,
+  updateMatch as storageUpdateMatch,
+  updateUser as storageUpdateUser,
+} from '@/services/storage.service.js'
 import { buildLeaderboard, calculateUserScore } from '@/utils/scoring.utils.js'
 
 const useStore = create((set, get) => ({
@@ -35,6 +45,7 @@ const useStore = create((set, get) => ({
   matches:     [],
   users:       [],
   predictions: [],
+  bracketResults: null,
   config:      null,
   loading:     false,
   error:       null,
@@ -49,7 +60,9 @@ const useStore = create((set, get) => ({
         getPredictions(),
         getConfig(),
       ])
-      set({ matches, users, predictions, config, loading: false })
+      const { currentUser } = get()
+      const bracketResults = currentUser ? await getBracketResults(currentUser.id) : null
+      set({ matches, users, predictions, config, bracketResults, loading: false })
     } catch (err) {
       set({ error: err.message, loading: false })
     }
@@ -129,6 +142,21 @@ const useStore = create((set, get) => ({
     const { currentUser, predictions } = get()
     if (!currentUser) return []
     return predictions.filter(p => p.userId === currentUser.id)
+  },
+
+  /** Returns persisted bracket picks for the current user */
+  getMyBracketResults: () => {
+    return get().bracketResults
+  },
+
+  /** Save generated knockout-bracket picks for the current user */
+  saveBracketResults: async (results) => {
+    const { currentUser } = get()
+    if (!currentUser) return null
+
+    const updated = await storageSaveBracketResults(currentUser.id, results)
+    set({ bracketResults: updated })
+    return updated
   },
 
   // ─── Leaderboard slice ────────────────────────────────────────────────────

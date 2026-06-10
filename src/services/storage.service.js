@@ -327,3 +327,58 @@ export async function updateConfig(updates) {
   const overrides = readLocal('config_overrides') || {}
   writeLocal('config_overrides', { ...overrides, ...updates })
 }
+
+// ─── Bracket Results ─────────────────────────────────────────────────────────
+
+function getBracketKey(userId) {
+  return `bracket_results_${userId}`
+}
+
+function emptyBracketResults(userId) {
+  return {
+    userId,
+    picks: {},
+    champion: null,
+    updatedAt: null,
+  }
+}
+
+export async function getBracketResults(userId) {
+  if (!userId) return null
+
+  if (hasSupabase) {
+    const rows = await supabaseRequest(
+      `app_config?key=eq.${encodeURIComponent(getBracketKey(userId))}&select=value`
+    )
+    return rows[0]?.value ?? emptyBracketResults(userId)
+  }
+
+  const base = await fetchJson('bracket-results.json')
+  const local = readLocal('bracket_results') || {}
+  return local[userId] ?? base[userId] ?? emptyBracketResults(userId)
+}
+
+export async function saveBracketResults(userId, results) {
+  if (!userId) return null
+
+  const record = {
+    ...emptyBracketResults(userId),
+    ...results,
+    userId,
+    updatedAt: new Date().toISOString(),
+  }
+
+  if (hasSupabase) {
+    await supabaseRequest('app_config?on_conflict=key', {
+      method: 'POST',
+      body: { key: getBracketKey(userId), value: record },
+      prefer: 'resolution=merge-duplicates,return=minimal',
+    })
+    return record
+  }
+
+  const local = readLocal('bracket_results') || {}
+  local[userId] = record
+  writeLocal('bracket_results', local)
+  return record
+}

@@ -5,7 +5,7 @@
  * standings and lets the user pick winners round by round until champion.
  */
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import { buildStandingsByGroup, getGroups } from '@/utils/tournamentSimulator.utils.js'
 
@@ -270,42 +270,70 @@ function renderConnectors(fromMatches, toMatches, fromX, toX, fromY, toY, side, 
   })
 }
 
-export default function KnockoutBracket({ matches, predictions }) {
+function buildBracketFromPicks(qualified, picks) {
+  const r32 = pairSeeds(qualified)
+  const r16 = makeNextRound(r32, 'r16', picks)
+  const qf = makeNextRound(r16, 'qf', picks)
+  const sf = makeNextRound(qf, 'sf', picks)
+  const finalMatch = {
+    id: 'final-1',
+    home: getWinner(sf[0], picks),
+    away: getWinner(sf[1], picks),
+  }
+  const thirdPlaceMatch = {
+    id: 'third-1',
+    home: getLoser(sf[0], picks),
+    away: getLoser(sf[1], picks),
+  }
+
+  return { r32, r16, qf, sf, finalMatch, thirdPlaceMatch }
+}
+
+function pruneAndSetPick(current, match, team) {
+  const roundIndex = getRoundIndex(match.id)
+  const next = {}
+
+  Object.entries(current).forEach(([matchId, code]) => {
+    if (getRoundIndex(matchId) <= roundIndex && matchId !== match.id) {
+      next[matchId] = code
+    }
+  })
+
+  next[match.id] = team.code
+  return next
+}
+
+export default function KnockoutBracket({ matches, predictions, bracketResults, onSave }) {
   const [picks, setPicks] = useState({})
+  const [saving, setSaving] = useState(false)
+  const [saveError, setSaveError] = useState('')
   const qualified = useMemo(() => buildQualifiedTeams(matches, predictions), [matches, predictions])
 
-  const bracket = useMemo(() => {
-    const r32 = pairSeeds(qualified)
-    const r16 = makeNextRound(r32, 'r16', picks)
-    const qf = makeNextRound(r16, 'qf', picks)
-    const sf = makeNextRound(qf, 'sf', picks)
-    const finalMatch = {
-      id: 'final-1',
-      home: getWinner(sf[0], picks),
-      away: getWinner(sf[1], picks),
-    }
-    const thirdPlaceMatch = {
-      id: 'third-1',
-      home: getLoser(sf[0], picks),
-      away: getLoser(sf[1], picks),
-    }
+  useEffect(() => {
+    setPicks(bracketResults?.picks ?? {})
+  }, [bracketResults?.updatedAt])
 
-    return { r32, r16, qf, sf, finalMatch, thirdPlaceMatch }
-  }, [qualified, picks])
+  const bracket = useMemo(() => buildBracketFromPicks(qualified, picks), [qualified, picks])
 
   function handlePick(match, team) {
     if (!team || !match.home || !match.away) return
-    const roundIndex = getRoundIndex(match.id)
+    const next = pruneAndSetPick(picks, match, team)
+    const nextBracket = buildBracketFromPicks(qualified, next)
+    const nextChampion = getWinner(nextBracket.finalMatch, next)
 
-    setPicks(current => {
-      const next = {}
-      Object.entries(current).forEach(([matchId, code]) => {
-        if (getRoundIndex(matchId) <= roundIndex && matchId !== match.id) {
-          next[matchId] = code
-        }
-      })
-      next[match.id] = team.code
-      return next
+    setPicks(next)
+    setSaving(true)
+    setSaveError('')
+
+    Promise.resolve(onSave?.({
+      picks: next,
+      champion: nextChampion
+        ? { code: nextChampion.code, name: nextChampion.name, flag: nextChampion.flag }
+        : null,
+    })).catch(err => {
+      setSaveError(err.message || 'No se pudo guardar la llave')
+    }).finally(() => {
+      setSaving(false)
     })
   }
 
@@ -325,8 +353,11 @@ export default function KnockoutBracket({ matches, predictions }) {
         <p className="text-sm text-gray-500">
           La llave se llena con tus tablas simuladas. Elige cada ganador para avanzar hasta el campeón.
         </p>
-        <div className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600">
-          {qualified.length}/32 equipos
+        <div className="flex items-center gap-2">
+          {saveError && <span className="text-xs font-semibold text-live">{saveError}</span>}
+          <div className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600">
+            {saving ? 'Guardando...' : `${qualified.length}/32 equipos`}
+          </div>
         </div>
       </div>
 
