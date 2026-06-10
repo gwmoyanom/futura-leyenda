@@ -50,7 +50,7 @@ jobs:
         env:
           # Set this to your GitHub repository name
           # e.g. if your repo is github.com/yourname/polla-mundialista
-          VITE_BASE_PATH: /polla-mundialista/
+          VITE_BASE_PATH: /futura-leyenda/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
