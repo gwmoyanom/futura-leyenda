@@ -51,6 +51,8 @@ jobs:
           # Set this to your GitHub repository name
           # e.g. if your repo is github.com/yourname/futura-leyenda
           VITE_BASE_PATH: /futura-leyenda/
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
