@@ -63,14 +63,29 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
   const [home, setHome] = useState(existingPrediction?.home ?? '')
   const [away, setAway] = useState(existingPrediction?.away ?? '')
   const [saved, setSaved] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleSave() {
+  async function handleSave() {
     const h = parseInt(home)
     const a = parseInt(away)
-    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) return
-    onSave(matchId, { home: h, away: a })
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    if (isNaN(h) || isNaN(a) || h < 0 || a < 0) {
+      setError('Ingresa un marcador válido')
+      return
+    }
+
+    setSaving(true)
+    setError('')
+
+    try {
+      await onSave(matchId, { home: h, away: a })
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar la predicción')
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (isLocked) {
@@ -118,9 +133,10 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
           placeholder="0"
         />
       </div>
-      <Button size="sm" variant={saved ? 'secondary' : 'primary'} onClick={handleSave}>
+      <Button size="sm" variant={saved ? 'secondary' : 'primary'} loading={saving} onClick={handleSave}>
         {saved ? '✓ Guardado' : 'Guardar'}
       </Button>
+      {error && <p className="text-xs font-medium text-live">{error}</p>}
     </div>
   )
 }

@@ -96,7 +96,7 @@ const useStore = create((set, get) => ({
 
   /** Save a prediction for the current user */
   savePrediction: async (matchId, prediction) => {
-    const { currentUser, predictions, isPredictionLocked } = get()
+    const { currentUser, isPredictionLocked } = get()
     if (!currentUser) return
 
     // Check if predictions are locked
@@ -106,8 +106,9 @@ const useStore = create((set, get) => ({
     }
 
     const updated = await storageSavePrediction(currentUser.id, matchId, prediction)
+    const { predictions } = get()
 
-    // Update local state immediately (optimistic update)
+    // Update local state after the database confirms the write.
     const existingIndex = predictions.findIndex(
       p => p.userId === currentUser.id && p.matchId === matchId
     )

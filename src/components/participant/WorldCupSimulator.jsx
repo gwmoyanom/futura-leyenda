@@ -52,6 +52,8 @@ function SimulatorMatchRow({ match, score, onScoreChange, disabled, compact = fa
     home: score?.home ?? '',
     away: score?.away ?? '',
   })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
 
   useEffect(() => {
     setDraft({
@@ -60,11 +62,24 @@ function SimulatorMatchRow({ match, score, onScoreChange, disabled, compact = fa
     })
   }, [score?.home, score?.away])
 
+  async function saveScore(nextScore) {
+    setSaving(true)
+    setError('')
+
+    try {
+      await onScoreChange(match.id, nextScore)
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
   function commit(nextDraft = draft) {
     const home = Number.parseInt(nextDraft.home, 10)
     const away = Number.parseInt(nextDraft.away, 10)
     if (!Number.isFinite(home) || !Number.isFinite(away) || home < 0 || away < 0) return
-    onScoreChange(match.id, { home, away })
+    saveScore({ home, away })
   }
 
   function update(side, value) {
@@ -74,7 +89,7 @@ function SimulatorMatchRow({ match, score, onScoreChange, disabled, compact = fa
     const home = Number.parseInt(nextDraft.home, 10)
     const away = Number.parseInt(nextDraft.away, 10)
     if (Number.isFinite(home) && Number.isFinite(away) && home >= 0 && away >= 0) {
-      onScoreChange(match.id, { home, away })
+      saveScore({ home, away })
     }
   }
 
@@ -95,8 +110,8 @@ function SimulatorMatchRow({ match, score, onScoreChange, disabled, compact = fa
         <span className="font-display text-lg text-gray-300">-</span>
         <ScoreInput value={draft.away} disabled={disabled} onChange={value => update('away', value)} />
         {!disabled && (
-          <Button size="sm" variant="ghost" className="hidden lg:inline-flex px-2" onClick={() => commit()}>
-            OK
+          <Button size="sm" variant="ghost" className="hidden lg:inline-flex px-2" loading={saving} onClick={() => commit()}>
+            {saving ? '' : 'OK'}
           </Button>
         )}
       </div>
@@ -106,7 +121,7 @@ function SimulatorMatchRow({ match, score, onScoreChange, disabled, compact = fa
       {!compact && (
         <div className="sm:col-span-3 flex flex-wrap items-center justify-between gap-2 border-t border-gray-100 pt-2 text-xs text-gray-400">
           <span>{formatKickoff(match.kickoff)}</span>
-          <span className="truncate">{match.venue}</span>
+          <span className={clsx('truncate', error && 'text-live')}>{error || match.venue}</span>
         </div>
       )}
     </div>
@@ -181,6 +196,8 @@ function GroupSimulator({ group, matches, standings, predictionMap, onScoreChang
 }
 
 function KnockoutCard({ match, predictionMap, standingsByGroup, onScoreChange, disabled }) {
+  const [savingWinner, setSavingWinner] = useState('')
+  const [error, setError] = useState('')
   const homeTeam = resolveTeam(match.homeTeam, standingsByGroup)
   const awayTeam = resolveTeam(match.awayTeam, standingsByGroup)
   const score = getScenarioScore(match, predictionMap)
@@ -189,9 +206,18 @@ function KnockoutCard({ match, predictionMap, standingsByGroup, onScoreChange, d
     score?.away > score?.home ? awayTeam :
     null
 
-  function chooseWinner(side) {
+  async function chooseWinner(side) {
     if (disabled) return
-    onScoreChange(match.id, side === 'home' ? { home: 1, away: 0 } : { home: 0, away: 1 })
+    setSavingWinner(side)
+    setError('')
+
+    try {
+      await onScoreChange(match.id, side === 'home' ? { home: 1, away: 0 } : { home: 0, away: 1 })
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar')
+    } finally {
+      setSavingWinner('')
+    }
   }
 
   return (
@@ -211,13 +237,14 @@ function KnockoutCard({ match, predictionMap, standingsByGroup, onScoreChange, d
       />
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button size="sm" variant={winner?.code === homeTeam.code ? 'primary' : 'secondary'} onClick={() => chooseWinner('home')} disabled={disabled}>
+        <Button size="sm" variant={winner?.code === homeTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'home'} onClick={() => chooseWinner('home')} disabled={disabled}>
           {homeTeam.code}
         </Button>
-        <Button size="sm" variant={winner?.code === awayTeam.code ? 'primary' : 'secondary'} onClick={() => chooseWinner('away')} disabled={disabled}>
+        <Button size="sm" variant={winner?.code === awayTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'away'} onClick={() => chooseWinner('away')} disabled={disabled}>
           {awayTeam.code}
         </Button>
       </div>
+      {error && <p className="mt-2 text-center text-xs font-medium text-live">{error}</p>}
     </div>
   )
 }
