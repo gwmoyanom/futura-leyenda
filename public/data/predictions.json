@@ -1,0 +1,34 @@
+[
+  {
+    "id": "p001",
+    "userId": "u002",
+    "matchId": "m004",
+    "prediction": { "home": 2, "away": 0 },
+    "submittedAt": "2026-06-14T10:00:00Z",
+    "pointsEarned": 1
+  },
+  {
+    "id": "p002",
+    "userId": "u002",
+    "matchId": "m005",
+    "prediction": { "home": 1, "away": 1 },
+    "submittedAt": "2026-06-14T10:05:00Z",
+    "pointsEarned": null
+  },
+  {
+    "id": "p003",
+    "userId": "u003",
+    "matchId": "m004",
+    "prediction": { "home": 3, "away": 1 },
+    "submittedAt": "2026-06-14T11:00:00Z",
+    "pointsEarned": 1
+  },
+  {
+    "id": "p004",
+    "userId": "u003",
+    "matchId": "m005",
+    "prediction": { "home": 2, "away": 0 },
+    "submittedAt": "2026-06-14T11:10:00Z",
+    "pointsEarned": null
+  }
+]

@@ -1,0 +1,68 @@
+[
+  {
+    "id": "m001",
+    "phase": "group",
+    "group": "A",
+    "homeTeam": { "name": "México",    "code": "MEX", "flag": "🇲🇽" },
+    "awayTeam": { "name": "Uruguay",   "code": "URU", "flag": "🇺🇾" },
+    "kickoff": "2026-06-14T18:00:00-05:00",
+    "venue": "Estadio Azteca, Ciudad de México",
+    "result": null,
+    "status": "upcoming"
+  },
+  {
+    "id": "m002",
+    "phase": "group",
+    "group": "A",
+    "homeTeam": { "name": "Argentina", "code": "ARG", "flag": "🇦🇷" },
+    "awayTeam": { "name": "Ecuador",   "code": "ECU", "flag": "🇪🇨" },
+    "kickoff": "2026-06-15T16:00:00-05:00",
+    "venue": "MetLife Stadium, Nueva York",
+    "result": null,
+    "status": "upcoming"
+  },
+  {
+    "id": "m003",
+    "phase": "group",
+    "group": "B",
+    "homeTeam": { "name": "Brasil",    "code": "BRA", "flag": "🇧🇷" },
+    "awayTeam": { "name": "Colombia",  "code": "COL", "flag": "🇨🇴" },
+    "kickoff": "2026-06-16T14:00:00-05:00",
+    "venue": "SoFi Stadium, Los Ángeles",
+    "result": null,
+    "status": "upcoming"
+  },
+  {
+    "id": "m004",
+    "phase": "group",
+    "group": "B",
+    "homeTeam": { "name": "España",    "code": "ESP", "flag": "🇪🇸" },
+    "awayTeam": { "name": "Marruecos", "code": "MAR", "flag": "🇲🇦" },
+    "kickoff": "2026-06-16T20:00:00-05:00",
+    "venue": "AT&T Stadium, Dallas",
+    "result": { "home": 2, "away": 1 },
+    "status": "finished"
+  },
+  {
+    "id": "m005",
+    "phase": "group",
+    "group": "C",
+    "homeTeam": { "name": "Francia",   "code": "FRA", "flag": "🇫🇷" },
+    "awayTeam": { "name": "Alemania",  "code": "GER", "flag": "🇩🇪" },
+    "kickoff": "2026-06-17T16:00:00-05:00",
+    "venue": "Levi's Stadium, San Francisco",
+    "result": { "home": 1, "away": 1 },
+    "status": "live"
+  },
+  {
+    "id": "m006",
+    "phase": "group",
+    "group": "C",
+    "homeTeam": { "name": "Portugal",  "code": "POR", "flag": "🇵🇹" },
+    "awayTeam": { "name": "Senegal",   "code": "SEN", "flag": "🇸🇳" },
+    "kickoff": "2026-06-17T20:00:00-05:00",
+    "venue": "Gillette Stadium, Boston",
+    "result": null,
+    "status": "upcoming"
+  }
+]
