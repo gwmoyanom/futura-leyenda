@@ -31,8 +31,8 @@ function AdminTabs({ activeTab, onTabChange }) {
           className={clsx(
             'px-5 py-2 rounded-lg text-sm font-medium transition-all duration-150',
             activeTab === tab.id
-              ? 'bg-white text-night shadow-sm'
-              : 'text-gray-500 hover:text-night'
+              ? 'bg-white text-navy shadow-sm'
+              : 'text-gray-500 hover:text-navy'
           )}
         >
           {tab.label}
@@ -102,7 +102,7 @@ function UserRow({ user, onApprove, onToggleBan }) {
         <div className="flex items-center gap-3">
           <span className="text-xl">{user.avatar}</span>
           <div>
-            <div className="font-medium text-sm text-night">{user.displayName}</div>
+            <div className="font-medium text-sm text-navy">{user.displayName}</div>
             <div className="text-xs text-gray-400">@{user.username}</div>
           </div>
         </div>
@@ -209,7 +209,7 @@ export default function AdminPage() {
   return (
     <div className="animate-fade-in">
       <div className="mb-6">
-        <h1 className="font-display text-3xl font-bold text-night tracking-wide">
+        <h1 className="font-display text-3xl font-bold text-navy tracking-wide">
           PANEL DE ADMINISTRACIÓN
         </h1>
         <p className="text-gray-500 text-sm mt-1">

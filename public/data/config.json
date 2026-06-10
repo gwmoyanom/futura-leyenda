@@ -1,29 +1,20 @@
 {
   "version": "1.0",
+  "project": {
+    "name": "Futura Leyenda",
+    "babyName": "Maximiliano",
+    "birthDate": "2026-07-09T00:00:00",
+    "tagline": "Mientras el mundo busca un campeón, nosotros celebramos el nacimiento de una futura leyenda."
+  },
   "rules": {
-    "exactScore": {
-      "points": 3,
-      "description": "Resultado exacto (ej: 2-1 correcto)"
-    },
-    "correctResult": {
-      "points": 1,
-      "description": "Resultado correcto (victoria/empate) sin marcador exacto"
-    },
-    "goldenBoot": {
-      "points": 5,
-      "description": "Acertar al goleador del torneo"
-    },
-    "champion": {
-      "points": 10,
-      "description": "Acertar al campeón del Mundial"
-    },
-    "finalist": {
-      "points": 4,
-      "description": "Acertar a un finalista"
-    }
+    "exactScore":    { "points": 3, "description": "Resultado exacto (ej: 2-1 correcto)" },
+    "correctResult": { "points": 1, "description": "Resultado correcto (victoria/empate) sin marcador exacto" },
+    "goldenBoot":    { "points": 5, "description": "Acertar al goleador del torneo" },
+    "champion":      { "points": 10, "description": "Acertar al campeón del Mundial" },
+    "finalist":      { "points": 4,  "description": "Acertar a un finalista" }
   },
   "prizes": [
-    { "position": 1, "label": "Campeón 🥇",   "description": "Premio principal — decidido en la baby shower" },
+    { "position": 1, "label": "Campeón 🥇",    "description": "Premio principal — revelado en la baby shower" },
     { "position": 2, "label": "Subcampeón 🥈", "description": "Premio secundario" },
     { "position": 3, "label": "Tercer lugar 🥉","description": "Premio de consolación" }
   ]

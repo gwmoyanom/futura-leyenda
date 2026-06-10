@@ -50,7 +50,7 @@ export default function PredictionsPage() {
       {/* Page header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="font-display text-3xl font-bold text-night tracking-wide">
+          <h1 className="font-display text-3xl font-bold text-navy tracking-wide">
             MIS PREDICCIONES
           </h1>
           <p className="text-gray-500 text-sm mt-1">

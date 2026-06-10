@@ -39,7 +39,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -50,7 +50,7 @@ jobs:
         env:
           # Set this to your GitHub repository name
           # e.g. if your repo is github.com/yourname/polla-mundialista
-          VITE_BASE_PATH: /futura-leyenda/
+          VITE_BASE_PATH: /polla-mundialista/
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

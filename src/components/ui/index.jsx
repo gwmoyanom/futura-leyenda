@@ -53,7 +53,7 @@ export function Input({
   return (
     <div className="space-y-1.5">
       {label && (
-        <label htmlFor={id} className="block text-sm font-medium text-night/80">
+        <label htmlFor={id} className="block text-sm font-medium text-navy/80">
           {label}
         </label>
       )}
@@ -61,7 +61,7 @@ export function Input({
         id={id}
         className={clsx(
           'w-full px-4 py-2.5 rounded-xl text-sm',
-          'border bg-white text-night placeholder-gray-400',
+          'border bg-white text-navy placeholder-gray-400',
           'transition-colors duration-150',
           'focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold',
           error
@@ -147,7 +147,7 @@ export function Spinner({ size = 'md', className = '' }) {
 
 export function LoadingScreen({ message = 'Cargando...' }) {
   return (
-    <div className="min-h-screen bg-night flex flex-col items-center justify-center gap-4">
+    <div className="min-h-screen bg-navy flex flex-col items-center justify-center gap-4">
       <Spinner size="lg" />
       <p className="text-gold/70 text-sm font-body">{message}</p>
     </div>
@@ -160,7 +160,7 @@ export function EmptyState({ icon = '📭', title, description, action }) {
   return (
     <div className="text-center py-16 px-4">
       <div className="text-5xl mb-4">{icon}</div>
-      <h3 className="text-lg font-semibold text-night mb-2">{title}</h3>
+      <h3 className="text-lg font-semibold text-navy mb-2">{title}</h3>
       {description && <p className="text-gray-500 text-sm mb-6">{description}</p>}
       {action}
     </div>

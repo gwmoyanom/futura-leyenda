@@ -20,7 +20,7 @@ function AuthWrapper({ title, subtitle, children }) {
         {/* Logo */}
         <div className="text-center mb-8">
           <div className="text-5xl mb-3">🏆</div>
-          <h1 className="font-display text-3xl font-bold text-night tracking-wide">{title}</h1>
+          <h1 className="font-display text-3xl font-bold text-navy tracking-wide">{title}</h1>
           <p className="text-gray-500 text-sm mt-2">{subtitle}</p>
         </div>
 
@@ -171,7 +171,7 @@ export function RegisterPage() {
       <AuthWrapper title="¡LISTO!" subtitle="">
         <div className="text-center space-y-4">
           <div className="text-5xl">🎉</div>
-          <h2 className="font-semibold text-night text-lg">Registro exitoso</h2>
+          <h2 className="font-semibold text-navy text-lg">Registro exitoso</h2>
           <p className="text-gray-500 text-sm">
             Tu cuenta está pendiente de aprobación por el organizador.
             Te avisarán cuando puedas empezar a predecir.

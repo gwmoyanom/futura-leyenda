@@ -41,7 +41,7 @@ function LeaderboardRow({ entry, rank, isCurrentUser }) {
           <div>
             <div className={clsx(
               'font-medium text-sm',
-              isCurrentUser ? 'text-gold-dark font-semibold' : 'text-night'
+              isCurrentUser ? 'text-gold-dark font-semibold' : 'text-navy'
             )}>
               {user.displayName}
               {isCurrentUser && <span className="ml-2 text-xs text-gold">(tú)</span>}
@@ -54,11 +54,11 @@ function LeaderboardRow({ entry, rank, isCurrentUser }) {
         <span className="font-display text-2xl font-bold text-gold">{totalPoints}</span>
       </td>
       <td className="py-4 text-center hidden sm:table-cell">
-        <span className="text-sm text-night font-medium">{exactScores}</span>
+        <span className="text-sm text-navy font-medium">{exactScores}</span>
         <span className="text-xs text-gray-400 ml-1">🎯</span>
       </td>
       <td className="py-4 text-center hidden sm:table-cell">
-        <span className="text-sm text-night font-medium">{correctResults}</span>
+        <span className="text-sm text-navy font-medium">{correctResults}</span>
         <span className="text-xs text-gray-400 ml-1">✅</span>
       </td>
       <td className="py-4 pr-5 text-center hidden md:table-cell">
@@ -86,7 +86,7 @@ export default function LeaderboardPage() {
   return (
     <div className="animate-fade-in">
       <div className="mb-8">
-        <h1 className="font-display text-3xl font-bold text-night tracking-wide">
+        <h1 className="font-display text-3xl font-bold text-navy tracking-wide">
           TABLA DE POSICIONES
         </h1>
         <p className="text-gray-500 text-sm mt-1">

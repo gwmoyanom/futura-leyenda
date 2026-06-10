@@ -31,11 +31,11 @@ function ScoreDisplay({ result, kickoff, status }) {
   if (status === 'live' || status === 'finished') {
     return (
       <div className="flex items-center justify-center gap-3">
-        <span className="font-display text-4xl font-bold text-night">
+        <span className="font-display text-4xl font-bold text-navy">
           {result?.home ?? '?'}
         </span>
         <span className="text-gray-400 font-display text-2xl">–</span>
-        <span className="font-display text-4xl font-bold text-night">
+        <span className="font-display text-4xl font-bold text-navy">
           {result?.away ?? '?'}
         </span>
       </div>
@@ -79,7 +79,7 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
         {existingPrediction ? (
           <div className="flex items-center justify-center gap-2">
             <span className="text-sm text-gray-500">Tu predicción:</span>
-            <span className="font-display text-lg font-semibold text-night">
+            <span className="font-display text-lg font-semibold text-navy">
               {existingPrediction.home} – {existingPrediction.away}
             </span>
             <span className="text-xs text-gray-400">🔒</span>
@@ -102,7 +102,7 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
           onChange={e => setHome(e.target.value)}
           className="w-14 h-12 text-center font-display text-xl font-bold
                      border-2 border-gold/30 rounded-xl focus:outline-none
-                     focus:border-gold bg-gold/5 text-night"
+                     focus:border-gold bg-gold/5 text-navy"
           placeholder="0"
         />
         <span className="text-gray-400 font-display text-xl">–</span>
@@ -114,7 +114,7 @@ function PredictionInput({ matchId, existingPrediction, isLocked, onSave }) {
           onChange={e => setAway(e.target.value)}
           className="w-14 h-12 text-center font-display text-xl font-bold
                      border-2 border-gold/30 rounded-xl focus:outline-none
-                     focus:border-gold bg-gold/5 text-night"
+                     focus:border-gold bg-gold/5 text-navy"
           placeholder="0"
         />
       </div>
