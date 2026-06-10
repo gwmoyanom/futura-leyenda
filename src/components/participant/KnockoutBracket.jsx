@@ -20,7 +20,7 @@ const ROUND_BY_PREFIX = {
 }
 const PLACEHOLDER = { name: '___', code: '---', flag: '', placeholder: true }
 const BOX = { width: 92, height: 52 }
-const BOARD = { width: 1000, height: 552 }
+const BOARD = { width: 1000, height: 590 }
 const X = {
   leftR32: 0,
   leftR16: 108,
@@ -32,11 +32,11 @@ const X = {
   rightR16: 800,
   rightR32: 908,
 }
-const Y = {
-  r32: [48, 111, 174, 237, 300, 363, 426, 489],
-  r16: [80, 206, 332, 458],
-  qf: [143, 395],
-  sf: [269],
+const CENTER_Y = {
+  r32: [82, 146, 210, 274, 338, 402, 466, 530],
+  r16: [114, 242, 370, 498],
+  qf: [178, 434],
+  sf: [306],
 }
 
 function withMeta(team, group, position) {
@@ -204,8 +204,8 @@ function Label({ children, x }) {
 function Connector({ from, to, side, active }) {
   const fromX = side === 'left' ? from.x + BOX.width : from.x
   const toX = side === 'left' ? to.x : to.x + BOX.width
-  const fromY = from.y + BOX.height / 2
-  const toY = to.y + BOX.height / 2
+  const fromY = from.y
+  const toY = to.y
   const midX = side === 'left'
     ? fromX + Math.max(12, (toX - fromX) / 2)
     : fromX - Math.max(12, (fromX - toX) / 2)
@@ -230,7 +230,7 @@ function MatchAt({ match, picks, onPick, x, y }) {
       picks={picks}
       onPick={onPick}
       className="absolute z-10"
-      style={{ left: x, top: y }}
+      style={{ left: x, top: y - BOX.height / 2 }}
     />
   )
 }
@@ -356,7 +356,7 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
         </div>
       </div>
 
-      <div className="overflow-x-auto overflow-y-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-card">
+      <div className="overflow-auto rounded-xl border border-gray-100 bg-white p-4 shadow-card">
         <div className="relative" style={{ width: BOARD.width, height: BOARD.height }}>
           <svg
             className="pointer-events-none absolute inset-0 z-0"
@@ -365,15 +365,15 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
             viewBox={`0 0 ${BOARD.width} ${BOARD.height}`}
             aria-hidden="true"
           >
-            {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, Y.r32, Y.r16, 'left', picks)}
-            {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, Y.r16, Y.qf, 'left', picks)}
-            {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, Y.qf, Y.sf, 'left', picks)}
-            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [186], 'left', picks)}
+            {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, CENTER_Y.r32, CENTER_Y.r16, 'left', picks)}
+            {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, CENTER_Y.r16, CENTER_Y.qf, 'left', picks)}
+            {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, CENTER_Y.qf, CENTER_Y.sf, 'left', picks)}
+            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, CENTER_Y.sf, [230], 'left', picks)}
 
-            {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, Y.r32, Y.r16, 'right', picks)}
-            {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, Y.r16, Y.qf, 'right', picks)}
-            {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, Y.qf, Y.sf, 'right', picks)}
-            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [186], 'right', picks)}
+            {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, CENTER_Y.r32, CENTER_Y.r16, 'right', picks)}
+            {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, CENTER_Y.r16, CENTER_Y.qf, 'right', picks)}
+            {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, CENTER_Y.qf, CENTER_Y.sf, 'right', picks)}
+            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, CENTER_Y.sf, [230], 'right', picks)}
           </svg>
 
           <Label x={X.leftR32}>{ROUND_LABELS[0]}</Label>
@@ -385,10 +385,10 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
           <Label x={X.rightR16}>{ROUND_LABELS[1]}</Label>
           <Label x={X.rightR32}>{ROUND_LABELS[0]}</Label>
 
-          {renderRound(leftR32, picks, handlePick, X.leftR32, Y.r32)}
-          {renderRound(leftR16, picks, handlePick, X.leftR16, Y.r16)}
-          {renderRound(leftQf, picks, handlePick, X.leftQf, Y.qf)}
-          {renderRound(leftSf, picks, handlePick, X.leftSf, Y.sf)}
+          {renderRound(leftR32, picks, handlePick, X.leftR32, CENTER_Y.r32)}
+          {renderRound(leftR16, picks, handlePick, X.leftR16, CENTER_Y.r16)}
+          {renderRound(leftQf, picks, handlePick, X.leftQf, CENTER_Y.qf)}
+          {renderRound(leftSf, picks, handlePick, X.leftSf, CENTER_Y.sf)}
 
           <CenterPanel
             finalMatch={bracket.finalMatch}
@@ -398,10 +398,10 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
             champion={champion}
           />
 
-          {renderRound(rightSf, picks, handlePick, X.rightSf, Y.sf)}
-          {renderRound(rightQf, picks, handlePick, X.rightQf, Y.qf)}
-          {renderRound(rightR16, picks, handlePick, X.rightR16, Y.r16)}
-          {renderRound(rightR32, picks, handlePick, X.rightR32, Y.r32)}
+          {renderRound(rightSf, picks, handlePick, X.rightSf, CENTER_Y.sf)}
+          {renderRound(rightQf, picks, handlePick, X.rightQf, CENTER_Y.qf)}
+          {renderRound(rightR16, picks, handlePick, X.rightR16, CENTER_Y.r16)}
+          {renderRound(rightR32, picks, handlePick, X.rightR32, CENTER_Y.r32)}
         </div>
       </div>
     </div>
