@@ -1,163 +1,191 @@
 /**
  * components/participant/KnockoutBracket.jsx
  *
- * Visual bracket for knockout stages (16avos through Final)
- * Shows matchups and allows predictions
+ * Generated knockout bracket from simulated group standings.
+ * The current dataset only has group-stage matches, so this view derives the
+ * 32-team bracket from first/second places plus the 8 best third-place teams.
  */
 
 import clsx from 'clsx'
-import { Badge } from '@/components/ui/index.jsx'
+import { buildStandingsByGroup, getGroups } from '@/utils/tournamentSimulator.utils.js'
 
-function MatchNode({ match, userPrediction, onSelect, isSelectable, isLocked }) {
-  const homeScore = userPrediction?.prediction?.home
-  const awayScore = userPrediction?.prediction?.away
-  const hasScore = homeScore !== undefined && awayScore !== undefined
+const ROUND_LABELS = ['16avos', '8avos', '4tos', 'Semis']
+const SPACING = {
+  r32: 'gap-2',
+  r16: 'gap-11',
+  qf: 'gap-28',
+  sf: 'gap-64',
+}
 
-  const getTeamDisplay = (team) => {
-    if (team.code === 'W_A1' || team.code === 'W_A2' || team.code === 'W_B1' || team.code === 'W_B2' ||
-        team.code === 'W_C1' || team.code === 'W_C2' || team.code === 'SF1' || team.code === 'SF2' || 
-        team.code === 'SF3' || team.code === 'SF4') {
-      return <span className="text-xs text-gray-400 italic">Por definir</span>
-    }
-    return (
-      <div className="flex items-center gap-1">
-        <span>{team.flag}</span>
-        <span className="text-sm font-medium">{team.name}</span>
-      </div>
-    )
+function withMeta(team, group, position) {
+  if (!team) return null
+  return { ...team, group, groupPosition: position }
+}
+
+function sortTeams(a, b) {
+  if (b.points !== a.points) return b.points - a.points
+  if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference
+  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
+  return a.name.localeCompare(b.name)
+}
+
+function buildQualifiedTeams(matches, predictions) {
+  const standingsByGroup = buildStandingsByGroup(matches, predictions)
+  const groups = getGroups(matches)
+
+  const winners = []
+  const runnersUp = []
+  const thirds = []
+
+  groups.forEach(group => {
+    winners.push(withMeta(standingsByGroup[group]?.[0], group, 1))
+    runnersUp.push(withMeta(standingsByGroup[group]?.[1], group, 2))
+    thirds.push(withMeta(standingsByGroup[group]?.[2], group, 3))
+  })
+
+  const bestThirds = thirds.filter(Boolean).sort(sortTeams).slice(0, 8)
+  return [...winners.filter(Boolean), ...runnersUp.filter(Boolean), ...bestThirds]
+}
+
+function pairSeeds(teams) {
+  const seeded = [...teams].sort(sortTeams)
+  const pairs = []
+
+  for (let index = 0; index < 16; index += 1) {
+    pairs.push({
+      id: `r32-${index + 1}`,
+      home: seeded[index] ?? null,
+      away: seeded[31 - index] ?? null,
+    })
   }
 
+  return pairs
+}
+
+function placeholderMatch(id, label) {
+  return {
+    id,
+    home: { name: label, code: '---', flag: '' },
+    away: { name: label, code: '---', flag: '' },
+    pending: true,
+  }
+}
+
+function buildEmptyRound(prefix, count, label) {
+  return Array.from({ length: count }, (_, index) => placeholderMatch(`${prefix}-${index + 1}`, label))
+}
+
+function TeamLine({ team, pending }) {
   return (
-    <div
-      onClick={() => isSelectable && !isLocked && onSelect?.(match)}
-      className={clsx(
-        'border border-gray-200 rounded-lg p-2 bg-white',
-        'transition-all duration-200',
-        isSelectable && !isLocked && 'cursor-pointer hover:shadow-md hover:border-gold',
-        !isSelectable && !isLocked && 'cursor-not-allowed',
-        hasScore && 'ring-2 ring-gold/30 bg-gold/5'
-      )}
-    >
-      {/* Match header */}
-      <div className="text-xs text-gray-500 mb-2 pb-1 border-b border-gray-100">
-        {match.phase.toUpperCase()}
-      </div>
-
-      {/* Teams */}
-      <div className="space-y-1">
-        {/* Home team */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            {getTeamDisplay(match.homeTeam)}
-          </div>
-          {match.result || hasScore ? (
-            <span className="font-bold text-navy text-sm">
-              {hasScore ? homeScore : match.result?.home}
-            </span>
-          ) : null}
-        </div>
-
-        {/* Separator */}
-        <div className="border-t border-gray-100"></div>
-
-        {/* Away team */}
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex-1 min-w-0">
-            {getTeamDisplay(match.awayTeam)}
-          </div>
-          {match.result || hasScore ? (
-            <span className="font-bold text-navy text-sm">
-              {hasScore ? awayScore : match.result?.away}
-            </span>
-          ) : null}
-        </div>
-      </div>
-
-      {/* Points indicator */}
-      {userPrediction?.pointsEarned !== undefined && userPrediction?.pointsEarned > 0 && (
-        <div className="mt-2 pt-2 border-t border-gold/20 text-center text-xs font-semibold text-gold">
-          +{userPrediction.pointsEarned} pts
-        </div>
+    <div className={clsx(
+      'flex h-7 items-center gap-2 rounded-md border px-2 text-xs',
+      pending ? 'border-gray-200 bg-gray-50 text-gray-400' : 'border-gray-200 bg-white text-navy'
+    )}>
+      <span className={clsx(
+        'h-4 w-4 rounded-full border text-[10px] leading-4 text-center',
+        pending ? 'border-gray-300' : 'border-gold/50 bg-gold/10'
+      )}>
+        {team?.flag || ''}
+      </span>
+      <span className="min-w-0 flex-1 truncate font-medium">
+        {pending ? '___' : team?.name}
+      </span>
+      {!pending && (
+        <span className="shrink-0 text-[10px] font-semibold text-gray-400">
+          {team.group}{team.groupPosition}
+        </span>
       )}
     </div>
   )
 }
 
-export default function KnockoutBracket({ matches, predictions, onMatchSelect, isLocked }) {
-  // Group matches by phase
-  const phases = ['round16', 'quarterfinal', 'semifinal', 'final']
-  const predictionMap = Object.fromEntries(
-    predictions.map(p => [p.matchId, p])
-  )
-
-  const matchesByPhase = {}
-  phases.forEach(phase => {
-    matchesByPhase[phase] = matches
-      .filter(m => m.phase === phase)
-      .sort((a, b) => new Date(a.kickoff) - new Date(b.kickoff))
-  })
-
-  const phaseLabels = {
-    round16: { label: 'OCTAVOS DE FINAL', rounds: 8 },
-    quarterfinal: { label: 'CUARTOS DE FINAL', rounds: 4 },
-    semifinal: { label: 'SEMIFINALES', rounds: 2 },
-    final: { label: 'FINAL', rounds: 1 },
-  }
+function MatchBox({ match }) {
+  const pending = match.pending
 
   return (
-    <div className="space-y-12">
-      {phases.map(phase => {
-        const phaseMatches = matchesByPhase[phase]
-        if (phaseMatches.length === 0) return null
+    <div className="relative w-[106px] space-y-1">
+      <TeamLine team={match.home} pending={pending} />
+      <TeamLine team={match.away} pending={pending} />
+    </div>
+  )
+}
 
-        const { label, rounds } = phaseLabels[phase]
+function BracketColumn({ title, matches, spacing, align = 'left' }) {
+  return (
+    <div className="flex w-[112px] shrink-0 flex-col">
+      <div className="mb-7 h-8 rounded border border-gray-200 bg-gray-50 text-center text-xs font-semibold leading-8 text-gray-600">
+        {title}
+      </div>
+      <div className={clsx('flex flex-1 flex-col', spacing, align === 'right' && 'items-end')}>
+        {matches.map(match => (
+          <MatchBox key={match.id} match={match} />
+        ))}
+      </div>
+    </div>
+  )
+}
 
-        return (
-          <div key={phase}>
-            {/* Phase header */}
-            <div className="mb-6">
-              <h3 className="font-display text-lg font-bold text-navy mb-1">
-                {label}
-              </h3>
-              <p className="text-xs text-gray-500">
-                {rounds} partido{rounds > 1 ? 's' : ''}
-              </p>
-            </div>
-
-            {/* Matches grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {phaseMatches.map(match => (
-                <MatchNode
-                  key={match.id}
-                  match={match}
-                  userPrediction={predictionMap[match.id]}
-                  onSelect={onMatchSelect}
-                  isSelectable={!isLocked && match.status === 'upcoming'}
-                  isLocked={isLocked}
-                />
-              ))}
-            </div>
-
-            {/* Phase separator */}
-            {phase !== 'final' && (
-              <div className="my-8 border-b-2 border-dashed border-gold/20"></div>
-            )}
+function CenterPanel() {
+  return (
+    <div className="flex w-[132px] shrink-0 flex-col items-center pt-[220px]">
+      <div className="rounded-3xl bg-gold/10 px-3 py-4">
+        <div className="rounded-xl border border-gray-300 bg-white p-3 shadow-card">
+          <h3 className="mb-3 text-center font-display text-lg font-bold text-navy">Final</h3>
+          <div className="space-y-1">
+            <TeamLine team={{ name: 'Finalista', code: '---' }} pending />
+            <TeamLine team={{ name: 'Finalista', code: '---' }} pending />
           </div>
-        )
-      })}
-
-      {/* Final champion section */}
-      {matchesByPhase.final.length > 0 && (
-        <div className="mt-12 p-6 bg-gradient-to-r from-gold/5 to-gold/10 border-2 border-gold/20 rounded-xl text-center">
-          <span className="text-4xl mb-2 block">🏆</span>
-          <h3 className="font-display text-xl font-bold text-gold-dark mb-2">
-            CAMPEÓN DEL MUNDO
-          </h3>
-          <p className="text-sm text-gray-600">
-            Completa todas tus predicciones para ver el resultado final
-          </p>
         </div>
-      )}
+
+        <div className="mt-24 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
+          <h3 className="mb-3 text-center font-display text-base font-bold leading-5 text-navy">3er<br />Puesto</h3>
+          <div className="space-y-1">
+            <TeamLine team={{ name: 'Semifinalista', code: '---' }} pending />
+            <TeamLine team={{ name: 'Semifinalista', code: '---' }} pending />
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default function KnockoutBracket({ matches, predictions }) {
+  const qualified = buildQualifiedTeams(matches, predictions)
+  const round32 = pairSeeds(qualified)
+  const leftR32 = round32.slice(0, 8)
+  const rightR32 = round32.slice(8).reverse()
+
+  const leftR16 = buildEmptyRound('left-r16', 4, 'Ganador 16avos')
+  const rightR16 = buildEmptyRound('right-r16', 4, 'Ganador 16avos')
+  const leftQf = buildEmptyRound('left-qf', 2, 'Ganador 8avos')
+  const rightQf = buildEmptyRound('right-qf', 2, 'Ganador 8avos')
+  const leftSf = buildEmptyRound('left-sf', 1, 'Ganador 4tos')
+  const rightSf = buildEmptyRound('right-sf', 1, 'Ganador 4tos')
+
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-gray-500">
+          Clasificados generados desde tus marcadores: líderes, segundos y mejores terceros.
+        </p>
+        <div className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600">
+          {qualified.length}/32 equipos
+        </div>
+      </div>
+
+      <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white p-4 shadow-card">
+        <div className="flex min-h-[740px] min-w-[1120px] justify-between gap-5">
+          <BracketColumn title={ROUND_LABELS[0]} matches={leftR32} spacing={SPACING.r32} />
+          <BracketColumn title={ROUND_LABELS[1]} matches={leftR16} spacing={SPACING.r16} />
+          <BracketColumn title={ROUND_LABELS[2]} matches={leftQf} spacing={SPACING.qf} />
+          <BracketColumn title={ROUND_LABELS[3]} matches={leftSf} spacing={SPACING.sf} />
+          <CenterPanel />
+          <BracketColumn title={ROUND_LABELS[3]} matches={rightSf} spacing={SPACING.sf} align="right" />
+          <BracketColumn title={ROUND_LABELS[2]} matches={rightQf} spacing={SPACING.qf} align="right" />
+          <BracketColumn title={ROUND_LABELS[1]} matches={rightR16} spacing={SPACING.r16} align="right" />
+          <BracketColumn title={ROUND_LABELS[0]} matches={rightR32} spacing={SPACING.r32} align="right" />
+        </div>
+      </div>
     </div>
   )
 }
