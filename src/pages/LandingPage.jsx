@@ -34,7 +34,7 @@ function Hero({ currentUser }) {
       <div className="relative z-10 animate-slide-up">
         {/* Eyebrow */}
         <p className="font-body text-gold/60 text-xs tracking-[0.4em] uppercase mb-6">
-          La Quiniela del Mundial 2026
+          La Predicción del Mundial 2026
         </p>
 
         {/* Trophy */}
@@ -58,7 +58,7 @@ function Hero({ currentUser }) {
           <div className="flex flex-wrap gap-3 justify-center">
             <Link to="/register">
               <Button size="lg" className="shadow-gold">
-                ⚽ Participar en la quiniela
+                ⚽ Participar en la predicción
               </Button>
             </Link>
             <Link to="/leaderboard">

@@ -139,7 +139,7 @@ export default function DashboardPage() {
               <div className="text-4xl mb-3">📋</div>
               <p className="text-sm">Aún no tienes predicciones guardadas</p>
               <Link to="/predictions" className="mt-4 inline-block">
-                <Button size="sm">Ir a la quiniela</Button>
+                <Button size="sm">Ir a la predicción</Button>
               </Link>
             </div>
           )}

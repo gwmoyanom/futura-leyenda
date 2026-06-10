@@ -76,7 +76,7 @@ function Navbar({ currentUser, onLogout }) {
         <div className="hidden sm:flex items-center gap-1">
           <NavLink to="/">Inicio</NavLink>
           <NavLink to="/leaderboard">Tabla</NavLink>
-          {currentUser && <NavLink to="/predictions">Quiniela</NavLink>}
+          {currentUser && <NavLink to="/predictions">Predicción</NavLink>}
           {currentUser && <NavLink to="/dashboard">Mi Marcador</NavLink>}
           {isAdmin && <NavLink to="/admin">⚙️ Admin</NavLink>}
         </div>
