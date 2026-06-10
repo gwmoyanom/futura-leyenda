@@ -1,8 +1,9 @@
 /**
  * components/participant/KnockoutBracket.jsx
  *
- * Interactive generated knockout bracket. It starts from simulated group
- * standings and lets the user pick winners round by round until champion.
+ * Interactive generated knockout bracket. The layout is grid-based: every
+ * round occupies row spans that mirror the bracket structure, so winners stay
+ * visually tied to the branch that produced them.
  */
 
 import { useEffect, useMemo, useState } from 'react'
@@ -19,25 +20,12 @@ const ROUND_BY_PREFIX = {
   third: 4,
 }
 const PLACEHOLDER = { name: '___', code: '---', flag: '', placeholder: true }
-const BOX = { width: 92, height: 52 }
-const BOARD = { width: 1000, height: 590 }
-const X = {
-  leftR32: 0,
-  leftR16: 108,
-  leftQf: 216,
-  leftSf: 324,
-  center: 428,
-  rightSf: 584,
-  rightQf: 692,
-  rightR16: 800,
-  rightR32: 908,
-}
-const CENTER_Y = {
-  r32: [82, 146, 210, 274, 338, 402, 466, 530],
-  r16: [114, 242, 370, 498],
-  qf: [178, 434],
-  sf: [306],
-}
+const COL_W = 94
+const COL_GAP = 18
+const ROW_H = 70
+const HEADER_H = 34
+const BOARD_W = COL_W * 9 + COL_GAP * 8
+const BOARD_H = HEADER_H + ROW_H * 8
 
 function withMeta(team, group, position) {
   if (!team) return null
@@ -104,167 +92,6 @@ function getRoundIndex(matchId) {
   return ROUND_BY_PREFIX[matchId.split('-')[0]] ?? 0
 }
 
-function TeamButton({ team, enabled, selected, faded, onClick }) {
-  const isPlaceholder = !team || team.placeholder
-
-  return (
-    <button
-      type="button"
-      disabled={!enabled || isPlaceholder}
-      onClick={onClick}
-      className={clsx(
-        'flex h-6 w-full items-center gap-1.5 rounded-md border px-2 text-xs transition-colors',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/40',
-        selected && 'border-gold bg-gold/10 text-navy shadow-gold-sm',
-        !selected && !faded && !isPlaceholder && 'border-gray-300 bg-white text-navy hover:border-gold',
-        faded && 'border-gray-200 bg-gray-50 text-gray-400 opacity-60',
-        isPlaceholder && 'border-gray-200 bg-gray-50 text-gray-400',
-        (!enabled || isPlaceholder) && 'cursor-not-allowed'
-      )}
-    >
-      <span className={clsx(
-        'h-4 w-4 shrink-0 rounded-full border text-[10px] leading-4 text-center',
-        selected ? 'border-gold bg-white' : 'border-gray-300'
-      )}>
-        {team?.flag || ''}
-      </span>
-      <span className="min-w-0 flex-1 truncate text-left font-medium" title={isPlaceholder ? '' : team.name}>
-        {isPlaceholder ? '___' : team.code}
-      </span>
-    </button>
-  )
-}
-
-function MatchBox({ match, picks, onPick, className = '', style }) {
-  const enabled = Boolean(match.home && match.away)
-  const selectedCode = picks[match.id]
-
-  return (
-    <div className={clsx('relative w-[92px] space-y-1', className)} style={style}>
-      <TeamButton
-        team={match.home ?? PLACEHOLDER}
-        enabled={enabled}
-        selected={selectedCode === match.home?.code}
-        faded={Boolean(selectedCode && selectedCode !== match.home?.code)}
-        onClick={() => onPick(match, match.home)}
-      />
-      <TeamButton
-        team={match.away ?? PLACEHOLDER}
-        enabled={enabled}
-        selected={selectedCode === match.away?.code}
-        faded={Boolean(selectedCode && selectedCode !== match.away?.code)}
-        onClick={() => onPick(match, match.away)}
-      />
-    </div>
-  )
-}
-
-function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
-  return (
-    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 24 }}>
-      <div className="mb-4 h-24 text-center">
-        {champion ? (
-          <div>
-            <div className="text-2xl">{champion.flag}</div>
-            <div className="text-sm text-navy">{champion.name}</div>
-            <div className="font-display text-lg font-bold text-navy">CAMPEÓN</div>
-            <div className="mt-3 text-5xl">🏆</div>
-          </div>
-        ) : (
-          <div className="pt-10 text-xs font-semibold uppercase text-gray-400">Campeón por definir</div>
-        )}
-      </div>
-
-      <div className="rounded-3xl bg-gold/10 px-3 py-4">
-        <div className="rounded-xl border border-gray-300 bg-white p-3 shadow-card">
-          <h3 className="mb-3 text-center font-display text-lg font-bold text-navy">Final</h3>
-          <MatchBox match={finalMatch} picks={picks} onPick={onPick} />
-        </div>
-
-        <div className="mt-16 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
-          <h3 className="mb-3 text-center font-display text-base font-bold leading-5 text-navy">3er<br />Puesto</h3>
-          <MatchBox match={thirdPlaceMatch} picks={picks} onPick={onPick} />
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Label({ children, x }) {
-  return (
-    <div
-      className="absolute h-8 rounded border border-gray-200 bg-gray-50 text-center text-xs font-semibold leading-8 text-gray-600"
-      style={{ left: x, top: 0, width: BOX.width }}
-    >
-      {children}
-    </div>
-  )
-}
-
-function Connector({ from, to, side, active }) {
-  const fromX = side === 'left' ? from.x + BOX.width : from.x
-  const toX = side === 'left' ? to.x : to.x + BOX.width
-  const fromY = from.y
-  const toY = to.y
-  const midX = side === 'left'
-    ? fromX + Math.max(12, (toX - fromX) / 2)
-    : fromX - Math.max(12, (fromX - toX) / 2)
-  const path = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`
-
-  return (
-    <path
-      d={path}
-      fill="none"
-      stroke={active ? '#D4AF37' : '#D5D5D5'}
-      strokeWidth={active ? 1.5 : 1}
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
-  )
-}
-
-function MatchAt({ match, picks, onPick, x, y }) {
-  return (
-    <MatchBox
-      match={match}
-      picks={picks}
-      onPick={onPick}
-      className="absolute z-10"
-      style={{ left: x, top: y - BOX.height / 2 }}
-    />
-  )
-}
-
-function renderRound(matches, picks, onPick, x, yValues) {
-  return matches.map((match, index) => (
-    <MatchAt
-      key={match.id}
-      match={match}
-      picks={picks}
-      onPick={onPick}
-      x={x}
-      y={yValues[index]}
-    />
-  ))
-}
-
-function renderConnectors(fromMatches, toMatches, fromX, toX, fromY, toY, side, picks) {
-  return fromMatches.map((match, index) => {
-    const targetIndex = Math.floor(index / 2)
-    const target = toMatches[targetIndex]
-
-    return (
-      <Connector
-        key={`${match.id}-${target?.id ?? targetIndex}`}
-        from={{ x: fromX, y: fromY[index] }}
-        to={{ x: toX, y: toY[targetIndex] }}
-        side={side}
-        active={Boolean(getWinner(match, picks))}
-      />
-    )
-  })
-}
-
 function buildBracketFromPicks(qualified, picks) {
   const r32 = pairSeeds(qualified)
   const r16 = makeNextRound(r32, 'r16', picks)
@@ -296,6 +123,187 @@ function pruneAndSetPick(current, match, team) {
 
   next[match.id] = team.code
   return next
+}
+
+function TeamButton({ team, enabled, selected, faded, onClick }) {
+  const isPlaceholder = !team || team.placeholder
+
+  return (
+    <button
+      type="button"
+      disabled={!enabled || isPlaceholder}
+      onClick={onClick}
+      className={clsx(
+        'flex h-6 w-full items-center gap-1.5 rounded-md border px-2 text-xs transition-colors',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-gold/40',
+        selected && 'border-gold bg-gold/10 text-navy shadow-gold-sm',
+        !selected && !faded && !isPlaceholder && 'border-gray-300 bg-white text-navy hover:border-gold',
+        faded && 'border-gray-200 bg-gray-50 text-gray-400 opacity-60',
+        isPlaceholder && 'border-gray-200 bg-gray-50 text-gray-400',
+        (!enabled || isPlaceholder) && 'cursor-not-allowed'
+      )}
+    >
+      <span className={clsx(
+        'h-4 w-4 shrink-0 rounded-full border text-[10px] leading-4 text-center',
+        selected ? 'border-gold bg-white' : 'border-gray-300'
+      )}>
+        {team?.flag || ''}
+      </span>
+      <span className="min-w-0 flex-1 truncate text-left font-medium" title={isPlaceholder ? '' : team.name}>
+        {isPlaceholder ? '___' : team.code}
+      </span>
+    </button>
+  )
+}
+
+function MatchBox({ match, picks, onPick }) {
+  const enabled = Boolean(match.home && match.away)
+  const selectedCode = picks[match.id]
+
+  return (
+    <div className="relative w-full space-y-1">
+      <TeamButton
+        team={match.home ?? PLACEHOLDER}
+        enabled={enabled}
+        selected={selectedCode === match.home?.code}
+        faded={Boolean(selectedCode && selectedCode !== match.home?.code)}
+        onClick={() => onPick(match, match.home)}
+      />
+      <TeamButton
+        team={match.away ?? PLACEHOLDER}
+        enabled={enabled}
+        selected={selectedCode === match.away?.code}
+        faded={Boolean(selectedCode && selectedCode !== match.away?.code)}
+        onClick={() => onPick(match, match.away)}
+      />
+    </div>
+  )
+}
+
+function GridSlot({ col, row, span, children }) {
+  return (
+    <div
+      className="relative z-10 flex items-center"
+      style={{
+        gridColumn: col + 1,
+        gridRow: `${row + 2} / span ${span}`,
+      }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Label({ col, children }) {
+  return (
+    <div
+      className="h-8 rounded border border-gray-200 bg-gray-50 text-center text-xs font-semibold leading-8 text-gray-600"
+      style={{ gridColumn: col + 1, gridRow: 1 }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
+  return (
+    <div className="relative z-10 flex h-full flex-col items-center justify-center">
+      <div className="mb-3 h-24 text-center">
+        {champion ? (
+          <div>
+            <div className="text-2xl">{champion.flag}</div>
+            <div className="text-sm text-navy">{champion.name}</div>
+            <div className="font-display text-lg font-bold text-navy">CAMPEÓN</div>
+            <div className="mt-2 text-4xl">🏆</div>
+          </div>
+        ) : (
+          <div className="pt-10 text-xs font-semibold uppercase text-gray-400">Campeón por definir</div>
+        )}
+      </div>
+
+      <div className="rounded-3xl bg-gold/10 px-3 py-4">
+        <div className="rounded-xl border border-gray-300 bg-white p-3 shadow-card">
+          <h3 className="mb-3 text-center font-display text-lg font-bold text-navy">Final</h3>
+          <MatchBox match={finalMatch} picks={picks} onPick={onPick} />
+        </div>
+
+        <div className="mt-14 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
+          <h3 className="mb-3 text-center font-display text-base font-bold leading-5 text-navy">3er<br />Puesto</h3>
+          <MatchBox match={thirdPlaceMatch} picks={picks} onPick={onPick} />
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function colLeft(col) {
+  return col * (COL_W + COL_GAP)
+}
+
+function colRight(col) {
+  return colLeft(col) + COL_W
+}
+
+function rowCenter(row, span) {
+  return HEADER_H + row * ROW_H + span * ROW_H / 2
+}
+
+function connectorPath(from, to, side) {
+  const startX = side === 'left' ? colRight(from.col) : colLeft(from.col)
+  const endX = side === 'left' ? colLeft(to.col) : colRight(to.col)
+  const startY = rowCenter(from.row, from.span)
+  const endY = rowCenter(to.row, to.span)
+  const middleX = side === 'left'
+    ? startX + (endX - startX) / 2
+    : startX - (startX - endX) / 2
+
+  return `M ${startX} ${startY} H ${middleX} V ${endY} H ${endX}`
+}
+
+function Connector({ from, to, side, active }) {
+  return (
+    <path
+      d={connectorPath(from, to, side)}
+      fill="none"
+      stroke={active ? '#D4AF37' : '#D5D5D5'}
+      strokeWidth={active ? 1.5 : 1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  )
+}
+
+function roundSlots(matches, col, rowSpan) {
+  return matches.map((match, index) => ({
+    match,
+    col,
+    row: index * rowSpan,
+    span: rowSpan,
+  }))
+}
+
+function renderSlots(slots, picks, onPick) {
+  return slots.map(slot => (
+    <GridSlot key={slot.match.id} col={slot.col} row={slot.row} span={slot.span}>
+      <MatchBox match={slot.match} picks={picks} onPick={onPick} />
+    </GridSlot>
+  ))
+}
+
+function renderConnectors(fromSlots, toSlots, side, picks) {
+  return fromSlots.map((slot, index) => {
+    const target = toSlots[Math.floor(index / 2)]
+
+    return (
+      <Connector
+        key={`${slot.match.id}-${target.match.id}`}
+        from={slot}
+        to={target}
+        side={side}
+        active={Boolean(getWinner(slot.match, picks))}
+      />
+    )
+  })
 }
 
 export default function KnockoutBracket({ matches, predictions, bracketResults, onSave }) {
@@ -342,6 +350,17 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
   const leftSf = bracket.sf.slice(0, 1)
   const rightSf = bracket.sf.slice(1)
 
+  const slots = {
+    leftR32: roundSlots(leftR32, 0, 1),
+    leftR16: roundSlots(leftR16, 1, 2),
+    leftQf: roundSlots(leftQf, 2, 4),
+    leftSf: roundSlots(leftSf, 3, 8),
+    rightSf: roundSlots(rightSf, 5, 8),
+    rightQf: roundSlots(rightQf, 6, 4),
+    rightR16: roundSlots(rightR16, 7, 2),
+    rightR32: roundSlots(rightR32, 8, 1),
+  }
+
   return (
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -357,51 +376,59 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
       </div>
 
       <div className="overflow-auto rounded-xl border border-gray-100 bg-white p-4 shadow-card">
-        <div className="relative" style={{ width: BOARD.width, height: BOARD.height }}>
+        <div
+          className="relative grid"
+          style={{
+            width: BOARD_W,
+            height: BOARD_H,
+            gridTemplateColumns: `repeat(9, ${COL_W}px)`,
+            gridTemplateRows: `${HEADER_H}px repeat(8, ${ROW_H}px)`,
+            columnGap: COL_GAP,
+          }}
+        >
           <svg
             className="pointer-events-none absolute inset-0 z-0"
-            width={BOARD.width}
-            height={BOARD.height}
-            viewBox={`0 0 ${BOARD.width} ${BOARD.height}`}
+            width={BOARD_W}
+            height={BOARD_H}
+            viewBox={`0 0 ${BOARD_W} ${BOARD_H}`}
             aria-hidden="true"
           >
-            {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, CENTER_Y.r32, CENTER_Y.r16, 'left', picks)}
-            {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, CENTER_Y.r16, CENTER_Y.qf, 'left', picks)}
-            {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, CENTER_Y.qf, CENTER_Y.sf, 'left', picks)}
-            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, CENTER_Y.sf, [230], 'left', picks)}
-
-            {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, CENTER_Y.r32, CENTER_Y.r16, 'right', picks)}
-            {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, CENTER_Y.r16, CENTER_Y.qf, 'right', picks)}
-            {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, CENTER_Y.qf, CENTER_Y.sf, 'right', picks)}
-            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, CENTER_Y.sf, [230], 'right', picks)}
+            {renderConnectors(slots.leftR32, slots.leftR16, 'left', picks)}
+            {renderConnectors(slots.leftR16, slots.leftQf, 'left', picks)}
+            {renderConnectors(slots.leftQf, slots.leftSf, 'left', picks)}
+            {renderConnectors(slots.rightR32, slots.rightR16, 'right', picks)}
+            {renderConnectors(slots.rightR16, slots.rightQf, 'right', picks)}
+            {renderConnectors(slots.rightQf, slots.rightSf, 'right', picks)}
           </svg>
 
-          <Label x={X.leftR32}>{ROUND_LABELS[0]}</Label>
-          <Label x={X.leftR16}>{ROUND_LABELS[1]}</Label>
-          <Label x={X.leftQf}>{ROUND_LABELS[2]}</Label>
-          <Label x={X.leftSf}>{ROUND_LABELS[3]}</Label>
-          <Label x={X.rightSf}>{ROUND_LABELS[3]}</Label>
-          <Label x={X.rightQf}>{ROUND_LABELS[2]}</Label>
-          <Label x={X.rightR16}>{ROUND_LABELS[1]}</Label>
-          <Label x={X.rightR32}>{ROUND_LABELS[0]}</Label>
+          <Label col={0}>{ROUND_LABELS[0]}</Label>
+          <Label col={1}>{ROUND_LABELS[1]}</Label>
+          <Label col={2}>{ROUND_LABELS[2]}</Label>
+          <Label col={3}>{ROUND_LABELS[3]}</Label>
+          <Label col={5}>{ROUND_LABELS[3]}</Label>
+          <Label col={6}>{ROUND_LABELS[2]}</Label>
+          <Label col={7}>{ROUND_LABELS[1]}</Label>
+          <Label col={8}>{ROUND_LABELS[0]}</Label>
 
-          {renderRound(leftR32, picks, handlePick, X.leftR32, CENTER_Y.r32)}
-          {renderRound(leftR16, picks, handlePick, X.leftR16, CENTER_Y.r16)}
-          {renderRound(leftQf, picks, handlePick, X.leftQf, CENTER_Y.qf)}
-          {renderRound(leftSf, picks, handlePick, X.leftSf, CENTER_Y.sf)}
+          {renderSlots(slots.leftR32, picks, handlePick)}
+          {renderSlots(slots.leftR16, picks, handlePick)}
+          {renderSlots(slots.leftQf, picks, handlePick)}
+          {renderSlots(slots.leftSf, picks, handlePick)}
 
-          <CenterPanel
-            finalMatch={bracket.finalMatch}
-            thirdPlaceMatch={bracket.thirdPlaceMatch}
-            picks={picks}
-            onPick={handlePick}
-            champion={champion}
-          />
+          <div className="z-10" style={{ gridColumn: 5, gridRow: '2 / span 8' }}>
+            <CenterPanel
+              finalMatch={bracket.finalMatch}
+              thirdPlaceMatch={bracket.thirdPlaceMatch}
+              picks={picks}
+              onPick={handlePick}
+              champion={champion}
+            />
+          </div>
 
-          {renderRound(rightSf, picks, handlePick, X.rightSf, CENTER_Y.sf)}
-          {renderRound(rightQf, picks, handlePick, X.rightQf, CENTER_Y.qf)}
-          {renderRound(rightR16, picks, handlePick, X.rightR16, CENTER_Y.r16)}
-          {renderRound(rightR32, picks, handlePick, X.rightR32, CENTER_Y.r32)}
+          {renderSlots(slots.rightSf, picks, handlePick)}
+          {renderSlots(slots.rightQf, picks, handlePick)}
+          {renderSlots(slots.rightR16, picks, handlePick)}
+          {renderSlots(slots.rightR32, picks, handlePick)}
         </div>
       </div>
     </div>
