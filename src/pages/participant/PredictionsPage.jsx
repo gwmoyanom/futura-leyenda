@@ -64,7 +64,7 @@ export default function PredictionsPage() {
             MIS PREDICCIONES
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            Ingresa tus marcadores antes del saque inicial de cada partido
+            Ingresa tus marcadores antes de la inauguración
           </p>
         </div>
         <div className="text-right">

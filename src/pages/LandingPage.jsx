@@ -103,10 +103,10 @@ function BabyProfile() {
             </h2>
             <div className="space-y-3">
               {[
-                { icon: '⭐', label: 'Nombre',              value: 'Maximiliano' },
-                { icon: '📅', label: 'Fecha estimada',      value: 'Julio 2026' },
+                { icon: '⭐', label: 'Nombre',              value: 'Maximiliano Moyano Rojas' },
+                { icon: '📅', label: 'Fecha estimada',      value: '10 de Julio, 2026' },
                 { icon: '🌍', label: 'Primer Mundial',       value: 'FIFA World Cup 2026' },
-                { icon: '⚽', label: 'Equipo favorito',      value: 'Por definir 😄' },
+                { icon: '⚽', label: 'Equipo favorito',      value: 'Mi Ecuador del alma' },
               ].map(({ icon, label, value }) => (
                 <div key={label} className="flex items-center gap-3">
                   <span className="text-xl w-7 flex-shrink-0">{icon}</span>

@@ -319,7 +319,7 @@ export default function WorldCupSimulator({ matches, predictions, onSave, isLock
         <div className="flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-gold">Simulador Mundial 2026</p>
-            <h2 className="mt-2 font-display text-3xl font-bold tracking-wide">Armá tu fixture</h2>
+            <h2 className="mt-2 font-display text-3xl font-bold tracking-wide">Realiza tu predicción</h2>
           </div>
 
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
