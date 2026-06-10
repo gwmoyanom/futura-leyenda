@@ -19,8 +19,8 @@ const ROUND_BY_PREFIX = {
   third: 4,
 }
 const PLACEHOLDER = { name: '___', code: '---', flag: '', placeholder: true }
-const BOX = { width: 92, height: 55 }
-const BOARD = { width: 1000, height: 710 }
+const BOX = { width: 92, height: 52 }
+const BOARD = { width: 1000, height: 552 }
 const X = {
   leftR32: 0,
   leftR16: 108,
@@ -33,10 +33,10 @@ const X = {
   rightR32: 908,
 }
 const Y = {
-  r32: [56, 136, 216, 296, 376, 456, 536, 616],
-  r16: [96, 256, 416, 576],
-  qf: [176, 496],
-  sf: [336],
+  r32: [48, 111, 174, 237, 300, 363, 426, 489],
+  r16: [80, 206, 332, 458],
+  qf: [143, 395],
+  sf: [269],
 }
 
 function withMeta(team, group, position) {
@@ -161,8 +161,8 @@ function MatchBox({ match, picks, onPick, className = '', style }) {
 
 function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
   return (
-    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 36 }}>
-      <div className="mb-7 h-28 text-center">
+    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 24 }}>
+      <div className="mb-4 h-24 text-center">
         {champion ? (
           <div>
             <div className="text-2xl">{champion.flag}</div>
@@ -181,7 +181,7 @@ function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
           <MatchBox match={finalMatch} picks={picks} onPick={onPick} />
         </div>
 
-        <div className="mt-24 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
+        <div className="mt-16 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
           <h3 className="mb-3 text-center font-display text-base font-bold leading-5 text-navy">3er<br />Puesto</h3>
           <MatchBox match={thirdPlaceMatch} picks={picks} onPick={onPick} />
         </div>
@@ -356,7 +356,7 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white p-4 shadow-card">
+      <div className="overflow-x-auto overflow-y-hidden rounded-xl border border-gray-100 bg-white p-4 shadow-card">
         <div className="relative" style={{ width: BOARD.width, height: BOARD.height }}>
           <svg
             className="pointer-events-none absolute inset-0 z-0"
@@ -368,12 +368,12 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
             {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, Y.r32, Y.r16, 'left', picks)}
             {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, Y.r16, Y.qf, 'left', picks)}
             {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, Y.qf, Y.sf, 'left', picks)}
-            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [232], 'left', picks)}
+            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [186], 'left', picks)}
 
             {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, Y.r32, Y.r16, 'right', picks)}
             {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, Y.r16, Y.qf, 'right', picks)}
             {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, Y.qf, Y.sf, 'right', picks)}
-            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [232], 'right', picks)}
+            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [186], 'right', picks)}
           </svg>
 
           <Label x={X.leftR32}>{ROUND_LABELS[0]}</Label>
