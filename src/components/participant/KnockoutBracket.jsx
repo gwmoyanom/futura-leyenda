@@ -18,13 +18,26 @@ const ROUND_BY_PREFIX = {
   final: 4,
   third: 4,
 }
-const SPACING = {
-  r32: 'gap-2',
-  r16: 'gap-11',
-  qf: 'gap-28',
-  sf: 'gap-64',
-}
 const PLACEHOLDER = { name: '___', code: '---', flag: '', placeholder: true }
+const BOX = { width: 112, height: 59 }
+const BOARD = { width: 1160, height: 760 }
+const X = {
+  leftR32: 0,
+  leftR16: 128,
+  leftQf: 256,
+  leftSf: 384,
+  center: 508,
+  rightSf: 664,
+  rightQf: 792,
+  rightR16: 920,
+  rightR32: 1048,
+}
+const Y = {
+  r32: [70, 155, 240, 325, 410, 495, 580, 665],
+  r16: [112, 282, 452, 622],
+  qf: [197, 537],
+  sf: [367],
+}
 
 function withMeta(team, group, position) {
   if (!team) return null
@@ -127,12 +140,12 @@ function TeamButton({ team, enabled, selected, faded, onClick }) {
   )
 }
 
-function MatchBox({ match, picks, onPick }) {
+function MatchBox({ match, picks, onPick, className = '', style }) {
   const enabled = Boolean(match.home && match.away)
   const selectedCode = picks[match.id]
 
   return (
-    <div className="relative w-[112px] space-y-1">
+    <div className={clsx('relative w-[112px] space-y-1', className)} style={style}>
       <TeamButton
         team={match.home ?? PLACEHOLDER}
         enabled={enabled}
@@ -151,24 +164,9 @@ function MatchBox({ match, picks, onPick }) {
   )
 }
 
-function BracketColumn({ title, matches, picks, onPick, spacing, align = 'left' }) {
-  return (
-    <div className="flex w-[118px] shrink-0 flex-col">
-      <div className="mb-7 h-8 rounded border border-gray-200 bg-gray-50 text-center text-xs font-semibold leading-8 text-gray-600">
-        {title}
-      </div>
-      <div className={clsx('flex flex-1 flex-col', spacing, align === 'right' && 'items-end')}>
-        {matches.map(match => (
-          <MatchBox key={match.id} match={match} picks={picks} onPick={onPick} />
-        ))}
-      </div>
-    </div>
-  )
-}
-
 function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
   return (
-    <div className="flex w-[140px] shrink-0 flex-col items-center pt-8">
+    <div className="absolute flex w-[144px] flex-col items-center" style={{ left: X.center, top: 46 }}>
       <div className="mb-8 h-32 text-center">
         {champion ? (
           <div>
@@ -195,6 +193,81 @@ function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
       </div>
     </div>
   )
+}
+
+function Label({ children, x }) {
+  return (
+    <div
+      className="absolute h-8 rounded border border-gray-200 bg-gray-50 text-center text-xs font-semibold leading-8 text-gray-600"
+      style={{ left: x, top: 0, width: BOX.width }}
+    >
+      {children}
+    </div>
+  )
+}
+
+function Connector({ from, to, side, active }) {
+  const fromX = side === 'left' ? from.x + BOX.width : from.x
+  const toX = side === 'left' ? to.x : to.x + BOX.width
+  const fromY = from.y + BOX.height / 2
+  const toY = to.y + BOX.height / 2
+  const midX = side === 'left'
+    ? fromX + Math.max(12, (toX - fromX) / 2)
+    : fromX - Math.max(12, (fromX - toX) / 2)
+  const path = `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`
+
+  return (
+    <path
+      d={path}
+      fill="none"
+      stroke={active ? '#D4AF37' : '#D5D5D5'}
+      strokeWidth={active ? 1.5 : 1}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  )
+}
+
+function MatchAt({ match, picks, onPick, x, y }) {
+  return (
+    <MatchBox
+      match={match}
+      picks={picks}
+      onPick={onPick}
+      className="absolute z-10"
+      style={{ left: x, top: y }}
+    />
+  )
+}
+
+function renderRound(matches, picks, onPick, x, yValues) {
+  return matches.map((match, index) => (
+    <MatchAt
+      key={match.id}
+      match={match}
+      picks={picks}
+      onPick={onPick}
+      x={x}
+      y={yValues[index]}
+    />
+  ))
+}
+
+function renderConnectors(fromMatches, toMatches, fromX, toX, fromY, toY, side, picks) {
+  return fromMatches.map((match, index) => {
+    const targetIndex = Math.floor(index / 2)
+    const target = toMatches[targetIndex]
+
+    return (
+      <Connector
+        key={`${match.id}-${target?.id ?? targetIndex}`}
+        from={{ x: fromX, y: fromY[index] }}
+        to={{ x: toX, y: toY[targetIndex] }}
+        side={side}
+        active={Boolean(getWinner(match, picks))}
+      />
+    )
+  })
 }
 
 export default function KnockoutBracket({ matches, predictions }) {
@@ -258,11 +331,39 @@ export default function KnockoutBracket({ matches, predictions }) {
       </div>
 
       <div className="overflow-x-auto rounded-xl border border-gray-100 bg-white p-4 shadow-card">
-        <div className="flex min-h-[760px] min-w-[1160px] justify-between gap-5">
-          <BracketColumn title={ROUND_LABELS[0]} matches={leftR32} picks={picks} onPick={handlePick} spacing={SPACING.r32} />
-          <BracketColumn title={ROUND_LABELS[1]} matches={leftR16} picks={picks} onPick={handlePick} spacing={SPACING.r16} />
-          <BracketColumn title={ROUND_LABELS[2]} matches={leftQf} picks={picks} onPick={handlePick} spacing={SPACING.qf} />
-          <BracketColumn title={ROUND_LABELS[3]} matches={leftSf} picks={picks} onPick={handlePick} spacing={SPACING.sf} />
+        <div className="relative" style={{ width: BOARD.width, height: BOARD.height }}>
+          <svg
+            className="pointer-events-none absolute inset-0 z-0"
+            width={BOARD.width}
+            height={BOARD.height}
+            viewBox={`0 0 ${BOARD.width} ${BOARD.height}`}
+            aria-hidden="true"
+          >
+            {renderConnectors(leftR32, leftR16, X.leftR32, X.leftR16, Y.r32, Y.r16, 'left', picks)}
+            {renderConnectors(leftR16, leftQf, X.leftR16, X.leftQf, Y.r16, Y.qf, 'left', picks)}
+            {renderConnectors(leftQf, leftSf, X.leftQf, X.leftSf, Y.qf, Y.sf, 'left', picks)}
+            {renderConnectors(leftSf, [bracket.finalMatch], X.leftSf, X.center, Y.sf, [247], 'left', picks)}
+
+            {renderConnectors(rightR32, rightR16, X.rightR32, X.rightR16, Y.r32, Y.r16, 'right', picks)}
+            {renderConnectors(rightR16, rightQf, X.rightR16, X.rightQf, Y.r16, Y.qf, 'right', picks)}
+            {renderConnectors(rightQf, rightSf, X.rightQf, X.rightSf, Y.qf, Y.sf, 'right', picks)}
+            {renderConnectors(rightSf, [bracket.finalMatch], X.rightSf, X.center, Y.sf, [247], 'right', picks)}
+          </svg>
+
+          <Label x={X.leftR32}>{ROUND_LABELS[0]}</Label>
+          <Label x={X.leftR16}>{ROUND_LABELS[1]}</Label>
+          <Label x={X.leftQf}>{ROUND_LABELS[2]}</Label>
+          <Label x={X.leftSf}>{ROUND_LABELS[3]}</Label>
+          <Label x={X.rightSf}>{ROUND_LABELS[3]}</Label>
+          <Label x={X.rightQf}>{ROUND_LABELS[2]}</Label>
+          <Label x={X.rightR16}>{ROUND_LABELS[1]}</Label>
+          <Label x={X.rightR32}>{ROUND_LABELS[0]}</Label>
+
+          {renderRound(leftR32, picks, handlePick, X.leftR32, Y.r32)}
+          {renderRound(leftR16, picks, handlePick, X.leftR16, Y.r16)}
+          {renderRound(leftQf, picks, handlePick, X.leftQf, Y.qf)}
+          {renderRound(leftSf, picks, handlePick, X.leftSf, Y.sf)}
+
           <CenterPanel
             finalMatch={bracket.finalMatch}
             thirdPlaceMatch={bracket.thirdPlaceMatch}
@@ -270,10 +371,11 @@ export default function KnockoutBracket({ matches, predictions }) {
             onPick={handlePick}
             champion={champion}
           />
-          <BracketColumn title={ROUND_LABELS[3]} matches={rightSf} picks={picks} onPick={handlePick} spacing={SPACING.sf} align="right" />
-          <BracketColumn title={ROUND_LABELS[2]} matches={rightQf} picks={picks} onPick={handlePick} spacing={SPACING.qf} align="right" />
-          <BracketColumn title={ROUND_LABELS[1]} matches={rightR16} picks={picks} onPick={handlePick} spacing={SPACING.r16} align="right" />
-          <BracketColumn title={ROUND_LABELS[0]} matches={rightR32} picks={picks} onPick={handlePick} spacing={SPACING.r32} align="right" />
+
+          {renderRound(rightSf, picks, handlePick, X.rightSf, Y.sf)}
+          {renderRound(rightQf, picks, handlePick, X.rightQf, Y.qf)}
+          {renderRound(rightR16, picks, handlePick, X.rightR16, Y.r16)}
+          {renderRound(rightR32, picks, handlePick, X.rightR32, Y.r32)}
         </div>
       </div>
     </div>
