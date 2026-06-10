@@ -63,10 +63,47 @@ const useStore = create((set, get) => ({
 
   // ─── Predictions slice ────────────────────────────────────────────────────
 
+  /** Check if predictions are currently locked (after inauguration) */
+  isPredictionLocked: () => {
+    const { config } = get()
+    if (!config?.tournament?.inaugurationDate) return false
+
+    const inaugDate = new Date(config.tournament.inaugurationDate)
+    return new Date() > inaugDate
+  },
+
+  /** Get matched filtered by phase */
+  getMatchesByPhase: (phase) => {
+    const { matches } = get()
+    if (!phase) return matches
+    return matches.filter(m => m.phase === phase)
+  },
+
+  /** Get predictions filtered by phase */
+  getPredictionsByPhase: (phase) => {
+    const { currentUser, predictions, matches } = get()
+    if (!currentUser) return []
+
+    const userPredictions = predictions.filter(p => p.userId === currentUser.id)
+    if (!phase) return userPredictions
+
+    const matchIds = matches
+      .filter(m => m.phase === phase)
+      .map(m => m.id)
+
+    return userPredictions.filter(p => matchIds.includes(p.matchId))
+  },
+
   /** Save a prediction for the current user */
   savePrediction: (matchId, prediction) => {
-    const { currentUser, predictions } = get()
+    const { currentUser, predictions, isPredictionLocked } = get()
     if (!currentUser) return
+
+    // Check if predictions are locked
+    if (isPredictionLocked()) {
+      console.warn('Predictions are locked after tournament inauguration')
+      return null
+    }
 
     const updated = storageSavePrediction(currentUser.id, matchId, prediction)
 
@@ -83,6 +120,7 @@ const useStore = create((set, get) => ({
     }
 
     set({ predictions: newPredictions })
+    return updated
   },
 
   /** Returns predictions for the current logged-in user */
@@ -106,6 +144,44 @@ const useStore = create((set, get) => ({
     const { currentUser, predictions, matches, config } = get()
     if (!currentUser || !config) return { totalPoints: 0, breakdown: [] }
     return calculateUserScore(currentUser.id, predictions, matches, config.rules)
+  },
+
+  /** Get score breakdown by phase */
+  getMyScoreByPhase: (phase) => {
+    const { currentUser, predictions, matches, config } = get()
+    if (!currentUser || !config) return { totalPoints: 0, breakdown: [] }
+
+    const phaseMatches = matches.filter(m => m.phase === phase)
+    const phaseMatchIds = phaseMatches.map(m => m.id)
+    const phasePredictions = predictions.filter(
+      p => p.userId === currentUser.id && phaseMatchIds.includes(p.matchId)
+    )
+
+    // Simplified scoring for phase
+    let totalPoints = 0
+    const breakdown = []
+
+    phasePredictions.forEach(pred => {
+      const match = phaseMatches.find(m => m.id === pred.matchId)
+      if (match?.result && pred.prediction) {
+        const { home: predHome, away: predAway } = pred.prediction
+        const { home: realHome, away: realAway } = match.result
+
+        if (predHome === realHome && predAway === realAway) {
+          totalPoints += config.rules.exactScore.points
+          breakdown.push({ matchId: pred.matchId, points: config.rules.exactScore.points })
+        } else if (
+          (predHome > predAway && realHome > realAway) ||
+          (predHome < predAway && realHome < realAway) ||
+          (predHome === predAway && realHome === realAway)
+        ) {
+          totalPoints += config.rules.correctResult.points
+          breakdown.push({ matchId: pred.matchId, points: config.rules.correctResult.points })
+        }
+      }
+    })
+
+    return { totalPoints, breakdown }
   },
 
   // ─── Admin slice ──────────────────────────────────────────────────────────
