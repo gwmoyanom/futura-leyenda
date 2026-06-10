@@ -113,6 +113,18 @@ on conflict (user_id, match_id) do update set
   updated_at = excluded.updated_at,
   points_earned = excluded.points_earned;
 
+insert into public.maxi_messages (id, user_id, author, avatar, text, created_at, updated_at)
+values
+  ('s1', null, 'La familia', '❤️', 'Maximiliano, que este primer Mundial sea el inicio de una vida llena de goles, sueños y amor. ¡Te amamos!', '2026-06-01T00:00:00Z', '2026-06-01T00:00:00Z'),
+  ('s2', null, 'Los padrinos', '⭐', '¡Futura leyenda! Que cada partido sea una aventura y cada día una victoria. Bienvenido al mundo.', '2026-06-02T00:00:00Z', '2026-06-02T00:00:00Z'),
+  ('s3', null, 'Los abuelos', '🌟', 'Que crezcas tan grande como nuestro amor por ti. El primer Mundial de muchos. ¡Vas a ser el mejor!', '2026-06-03T00:00:00Z', '2026-06-03T00:00:00Z')
+on conflict (id) do update set
+  author = excluded.author,
+  avatar = excluded.avatar,
+  text = excluded.text,
+  created_at = excluded.created_at,
+  updated_at = excluded.updated_at;
+
 insert into public.app_config (key, value)
 values (
   'main',

@@ -15,7 +15,6 @@ import { Link } from 'react-router-dom'
 import useStore from '@/store/index.js'
 import MatchCard from '@/components/participant/MatchCard.jsx'
 import BirthCountdown from '@/components/participant/BirthCountdown.jsx'
-import MessagesSection from '@/components/participant/MessagesSection.jsx'
 import Button from '@/components/ui/Button.jsx'
 import { Spinner } from '@/components/ui/index.jsx'
 import { groupMatchesByDate, formatDateLabel } from '@/utils/date.utils.js'
@@ -224,7 +223,6 @@ export default function LandingPage() {
       <BabyProfile />
       <HowItWorks />
       <MatchesSection matches={matches} />
-      <MessagesSection />
     </div>
   )
 }

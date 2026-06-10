@@ -142,6 +142,30 @@ function toPredictionRow(prediction) {
   }
 }
 
+function mapMaxiMessage(row) {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    author: row.author,
+    avatar: row.avatar,
+    text: row.text,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  }
+}
+
+function toMaxiMessageRow(message) {
+  return {
+    id: message.id,
+    user_id: message.userId,
+    author: message.author,
+    avatar: message.avatar,
+    text: message.text,
+    created_at: message.createdAt,
+    updated_at: message.updatedAt,
+  }
+}
+
 // ─── Matches ────────────────────────────────────────────────────────────────
 
 export async function getMatches() {
@@ -296,6 +320,75 @@ export async function savePrediction(userId, matchId, prediction) {
   }
 
   writeLocal('predictions_local', predictions)
+  return localRecord
+}
+
+// ─── Maxi Messages ──────────────────────────────────────────────────────────
+
+function sortMessages(messages) {
+  return [...messages].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+}
+
+export async function getMaxiMessages() {
+  if (hasSupabase) {
+    const rows = await supabaseRequest('maxi_messages?select=*&order=created_at.desc')
+    return rows.map(mapMaxiMessage)
+  }
+
+  const base = await fetchJson('messages.json')
+  const local = readLocal('maxi_messages_local') || []
+  const localUserIds = new Set(local.map(message => message.userId).filter(Boolean))
+  const filteredBase = base.filter(message => !message.userId || !localUserIds.has(message.userId))
+
+  return sortMessages([...filteredBase, ...local])
+}
+
+export async function saveMaxiMessage(user, text) {
+  if (!user) return null
+
+  const now = new Date().toISOString()
+  const record = {
+    id: `maxi_${user.id}`,
+    userId: user.id,
+    author: user.displayName,
+    avatar: user.avatar || '⚽',
+    text,
+    createdAt: now,
+    updatedAt: now,
+  }
+
+  if (hasSupabase) {
+    const existing = await supabaseRequest(
+      `maxi_messages?user_id=eq.${encodeURIComponent(user.id)}&select=*`
+    )
+    const current = existing[0] ? mapMaxiMessage(existing[0]) : null
+    const rows = await supabaseRequest('maxi_messages?on_conflict=user_id', {
+      method: 'POST',
+      body: toMaxiMessageRow({
+        ...record,
+        id: current?.id || record.id,
+        createdAt: current?.createdAt || now,
+      }),
+      prefer: 'resolution=merge-duplicates,return=representation',
+    })
+    return mapMaxiMessage(rows[0])
+  }
+
+  const messages = readLocal('maxi_messages_local') || []
+  const existingIndex = messages.findIndex(message => message.userId === user.id)
+  const current = messages[existingIndex]
+  const localRecord = {
+    ...record,
+    createdAt: current?.createdAt || now,
+  }
+
+  if (existingIndex >= 0) {
+    messages[existingIndex] = localRecord
+  } else {
+    messages.push(localRecord)
+  }
+
+  writeLocal('maxi_messages_local', messages)
   return localRecord
 }
 

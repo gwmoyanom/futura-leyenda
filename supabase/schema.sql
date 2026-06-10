@@ -37,6 +37,17 @@ create table if not exists public.predictions (
   unique (user_id, match_id)
 );
 
+create table if not exists public.maxi_messages (
+  id text primary key,
+  user_id text references public.users(id) on delete set null,
+  author text not null,
+  avatar text not null default '💌',
+  text text not null check (char_length(text) between 5 and 240),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now(),
+  unique (user_id)
+);
+
 create table if not exists public.app_config (
   key text primary key,
   value jsonb not null,
@@ -47,10 +58,13 @@ create index if not exists idx_matches_kickoff on public.matches(kickoff);
 create index if not exists idx_matches_phase on public.matches(phase);
 create index if not exists idx_predictions_user_id on public.predictions(user_id);
 create index if not exists idx_predictions_match_id on public.predictions(match_id);
+create index if not exists idx_maxi_messages_created_at on public.maxi_messages(created_at desc);
+create index if not exists idx_maxi_messages_user_id on public.maxi_messages(user_id);
 
 alter table public.users enable row level security;
 alter table public.matches enable row level security;
 alter table public.predictions enable row level security;
+alter table public.maxi_messages enable row level security;
 alter table public.app_config enable row level security;
 
 -- This app currently uses friendly client-side auth, so the anon key needs
@@ -79,6 +93,15 @@ create policy "public predictions insert" on public.predictions for insert with 
 
 drop policy if exists "public predictions update" on public.predictions;
 create policy "public predictions update" on public.predictions for update using (true) with check (true);
+
+drop policy if exists "public maxi messages read" on public.maxi_messages;
+create policy "public maxi messages read" on public.maxi_messages for select using (true);
+
+drop policy if exists "public maxi messages insert" on public.maxi_messages;
+create policy "public maxi messages insert" on public.maxi_messages for insert with check (true);
+
+drop policy if exists "public maxi messages update" on public.maxi_messages;
+create policy "public maxi messages update" on public.maxi_messages for update using (true) with check (true);
 
 drop policy if exists "public config read" on public.app_config;
 create policy "public config read" on public.app_config for select using (true);

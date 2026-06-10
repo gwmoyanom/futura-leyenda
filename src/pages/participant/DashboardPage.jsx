@@ -66,7 +66,7 @@ function BreakdownRow({ item }) {
 }
 
 export default function DashboardPage() {
-  const { loadAll, loading, getMyScore, getLeaderboard, currentUser } = useStore()
+  const { loadAll, loading, getMyScore, getLeaderboard, currentUser, maxiMessages } = useStore()
 
   useEffect(() => { loadAll() }, [loadAll])
 
@@ -74,7 +74,8 @@ export default function DashboardPage() {
   const leaderboard  = getLeaderboard()
   const myEntry      = leaderboard.find(e => e.user.id === currentUser?.id)
   const myRank       = leaderboard.findIndex(e => e.user.id === currentUser?.id) + 1
-  const earnedBadges = myEntry ? getEarnedBadges(myEntry, myRank) : []
+  const hasMessage   = maxiMessages.some(message => message.userId === currentUser?.id)
+  const earnedBadges = myEntry ? getEarnedBadges(myEntry, myRank, hasMessage) : []
 
   const exactScores    = breakdown.filter(b => b.points === 3).length
   const correctResults = breakdown.filter(b => b.points === 1).length

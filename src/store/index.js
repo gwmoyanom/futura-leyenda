@@ -11,11 +11,13 @@ import { create } from 'zustand'
 import { getSession, clearSession, login as authLogin, register as authRegister } from '@/services/auth.service.js'
 import {
   getMatches,
+  getMaxiMessages,
   getUsers,
   getPredictions,
   getConfig,
   getBracketResults,
   saveBracketResults as storageSaveBracketResults,
+  saveMaxiMessage as storageSaveMaxiMessage,
   savePrediction as storageSavePrediction,
   updateMatch as storageUpdateMatch,
   updateUser as storageUpdateUser,
@@ -45,6 +47,7 @@ const useStore = create((set, get) => ({
   matches:     [],
   users:       [],
   predictions: [],
+  maxiMessages: [],
   bracketResults: null,
   config:      null,
   loading:     false,
@@ -54,15 +57,16 @@ const useStore = create((set, get) => ({
   loadAll: async () => {
     set({ loading: true, error: null })
     try {
-      const [matches, users, predictions, config] = await Promise.all([
+      const [matches, users, predictions, config, maxiMessages] = await Promise.all([
         getMatches(),
         getUsers(),
         getPredictions(),
         getConfig(),
+        getMaxiMessages(),
       ])
       const { currentUser } = get()
       const bracketResults = currentUser ? await getBracketResults(currentUser.id) : null
-      set({ matches, users, predictions, config, bracketResults, loading: false })
+      set({ matches, users, predictions, config, maxiMessages, bracketResults, loading: false })
     } catch (err) {
       set({ error: err.message, loading: false })
     }
@@ -72,6 +76,12 @@ const useStore = create((set, get) => ({
   reloadMatches: async () => {
     const matches = await getMatches()
     set({ matches })
+  },
+
+  /** Reload messages for Maximiliano */
+  reloadMaxiMessages: async () => {
+    const maxiMessages = await getMaxiMessages()
+    set({ maxiMessages })
   },
 
   // ─── Predictions slice ────────────────────────────────────────────────────
@@ -156,6 +166,21 @@ const useStore = create((set, get) => ({
 
     const updated = await storageSaveBracketResults(currentUser.id, results)
     set({ bracketResults: updated })
+    return updated
+  },
+
+  /** Save or update the current user's message for Maximiliano */
+  saveMaxiMessage: async (text) => {
+    const { currentUser, maxiMessages } = get()
+    if (!currentUser) return null
+
+    const updated = await storageSaveMaxiMessage(currentUser, text)
+    const nextMessages = maxiMessages.filter(message => message.userId !== currentUser.id)
+    set({
+      maxiMessages: [updated, ...nextMessages].sort(
+        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+      ),
+    })
     return updated
   },
 

@@ -14,6 +14,7 @@ import { RequireAuth, RequireAdmin, RedirectIfAuth } from '@/components/auth/Gua
 import LandingPage               from '@/pages/LandingPage.jsx'
 import { LoginPage, RegisterPage } from '@/pages/AuthPages.jsx'
 import LeaderboardPage           from '@/pages/LeaderboardPage.jsx'
+import MessagesPage              from '@/pages/MessagesPage.jsx'
 import PredictionsPage           from '@/pages/participant/PredictionsPage.jsx'
 import DashboardPage             from '@/pages/participant/DashboardPage.jsx'
 import AdminPage                 from '@/pages/admin/AdminPage.jsx'
@@ -48,6 +49,7 @@ export default function App() {
       <Routes>
         <Route path="/"            element={<LandingPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
+        <Route path="/messages"    element={<MessagesPage />} />
         <Route path="/login"    element={<RedirectIfAuth><LoginPage /></RedirectIfAuth>} />
         <Route path="/register" element={<RedirectIfAuth><RegisterPage /></RedirectIfAuth>} />
         <Route path="/predictions" element={<RequireAuth><PredictionsPage /></RequireAuth>} />

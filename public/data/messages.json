@@ -1,0 +1,29 @@
+[
+  {
+    "id": "s1",
+    "userId": null,
+    "author": "La familia",
+    "avatar": "❤️",
+    "text": "Maximiliano, que este primer Mundial sea el inicio de una vida llena de goles, sueños y amor. ¡Te amamos!",
+    "createdAt": "2026-06-01T00:00:00Z",
+    "updatedAt": "2026-06-01T00:00:00Z"
+  },
+  {
+    "id": "s2",
+    "userId": null,
+    "author": "Los padrinos",
+    "avatar": "⭐",
+    "text": "¡Futura leyenda! Que cada partido sea una aventura y cada día una victoria. Bienvenido al mundo.",
+    "createdAt": "2026-06-02T00:00:00Z",
+    "updatedAt": "2026-06-02T00:00:00Z"
+  },
+  {
+    "id": "s3",
+    "userId": null,
+    "author": "Los abuelos",
+    "avatar": "🌟",
+    "text": "Que crezcas tan grande como nuestro amor por ti. El primer Mundial de muchos. ¡Vas a ser el mejor!",
+    "createdAt": "2026-06-03T00:00:00Z",
+    "updatedAt": "2026-06-03T00:00:00Z"
+  }
+]

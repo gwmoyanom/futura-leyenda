@@ -2,6 +2,7 @@
  * layout/AppShell.jsx — Futura Leyenda branded shell
  */
 
+import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import useStore from '@/store/index.js'
@@ -38,14 +39,16 @@ function TickerStrip({ matches }) {
   )
 }
 
-function NavLink({ to, children }) {
+function NavLink({ to, children, onClick, mobile = false }) {
   const location = useLocation()
   const isActive = location.pathname === to || location.pathname.startsWith(to + '/')
   return (
     <Link
       to={to}
+      onClick={onClick}
       className={clsx(
-        'px-3 py-2 rounded-lg text-sm font-medium transition-all duration-150',
+        'rounded-lg font-medium transition-all duration-150',
+        mobile ? 'block px-4 py-3 text-sm' : 'px-3 py-2 text-sm',
         isActive
           ? 'text-gold bg-gold/10'
           : 'text-white/60 hover:text-white hover:bg-white/5'
@@ -58,6 +61,9 @@ function NavLink({ to, children }) {
 
 function Navbar({ currentUser, onLogout }) {
   const isAdmin = currentUser?.role === 'admin'
+  const [mobileOpen, setMobileOpen] = useState(false)
+  const closeMobile = () => setMobileOpen(false)
+
   return (
     <nav className="bg-navy border-b border-white/8 sticky top-0 z-50 shadow-navy">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
@@ -76,12 +82,22 @@ function Navbar({ currentUser, onLogout }) {
         <div className="hidden sm:flex items-center gap-1">
           <NavLink to="/">Inicio</NavLink>
           <NavLink to="/leaderboard">Tabla</NavLink>
+          <NavLink to="/messages">Mensaje a Maxi</NavLink>
           {currentUser && <NavLink to="/predictions">Predicción</NavLink>}
           {currentUser && <NavLink to="/dashboard">Mi Marcador</NavLink>}
           {isAdmin && <NavLink to="/admin">⚙️ Admin</NavLink>}
         </div>
 
         <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setMobileOpen(open => !open)}
+            className="sm:hidden w-10 h-10 rounded-lg border border-white/10 text-white/70 hover:text-white hover:bg-white/5 transition-colors"
+            aria-label={mobileOpen ? 'Cerrar menú' : 'Abrir menú'}
+            aria-expanded={mobileOpen}
+          >
+            <span className="text-xl leading-none">{mobileOpen ? '×' : '☰'}</span>
+          </button>
           {currentUser ? (
             <>
               <span className="hidden sm:flex items-center gap-1.5 text-sm text-white/50">
@@ -110,6 +126,19 @@ function Navbar({ currentUser, onLogout }) {
           )}
         </div>
       </div>
+
+      {mobileOpen && (
+        <div className="sm:hidden border-t border-white/8 bg-navy-800">
+          <div className="max-w-6xl mx-auto px-4 py-3 space-y-1">
+            <NavLink to="/" mobile onClick={closeMobile}>Inicio</NavLink>
+            <NavLink to="/leaderboard" mobile onClick={closeMobile}>Tabla</NavLink>
+            <NavLink to="/messages" mobile onClick={closeMobile}>Mensaje a Maxi</NavLink>
+            {currentUser && <NavLink to="/predictions" mobile onClick={closeMobile}>Predicción</NavLink>}
+            {currentUser && <NavLink to="/dashboard" mobile onClick={closeMobile}>Mi Marcador</NavLink>}
+            {isAdmin && <NavLink to="/admin" mobile onClick={closeMobile}>⚙️ Admin</NavLink>}
+          </div>
+        </div>
+      )}
     </nav>
   )
 }

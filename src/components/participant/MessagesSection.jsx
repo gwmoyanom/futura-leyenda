@@ -1,189 +1,202 @@
 /**
  * MessagesSection.jsx
  *
- * Participants can leave a message/wish for Maximiliano.
- * Messages are stored in localStorage and displayed as a card wall.
- * Logged-in users can add one message per account.
+ * Public wall of messages for Maximiliano. Logged-in users can save one
+ * message, which is persisted through the app storage layer.
  */
 
-import { useState, useEffect } from 'react'
+import { useEffect, useMemo, useState } from 'react'
+import { Link } from 'react-router-dom'
 import useStore from '@/store/index.js'
 import Button from '@/components/ui/Button.jsx'
 
-const MESSAGES_KEY = 'futura_leyenda_messages'
+function formatMessageDate(value) {
+  if (!value) return ''
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
-
-function loadMessages() {
-  try {
-    return JSON.parse(localStorage.getItem(MESSAGES_KEY) || '[]')
-  } catch {
-    return []
-  }
+  return date.toLocaleDateString('es', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  })
 }
-
-function saveMessages(msgs) {
-  localStorage.setItem(MESSAGES_KEY, JSON.stringify(msgs))
-}
-
-// Seed messages so the wall doesn't look empty at first
-const SEED_MESSAGES = [
-  { id: 's1', author: 'La familia', avatar: '❤️',  text: 'Maximiliano, que este primer Mundial sea el inicio de una vida llena de goles, sueños y amor. ¡Te amamos!', createdAt: '2026-06-01' },
-  { id: 's2', author: 'Los padrinos', avatar: '⭐', text: '¡Futura leyenda! Que cada partido sea una aventura y cada día una victoria. Bienvenido al mundo.', createdAt: '2026-06-02' },
-  { id: 's3', author: 'Los abuelos',  avatar: '🌟', text: 'Que crezcas tan grande como nuestro amor por ti. El primer Mundial de muchos. ¡Vas a ser el mejor!', createdAt: '2026-06-03' },
-]
-
-// ─── Message card ─────────────────────────────────────────────────────────────
 
 function MessageCard({ message, index }) {
-  const delay = `${index * 0.08}s`
+  const delay = `${Math.min(index, 8) * 0.05}s`
+
   return (
-    <div
+    <article
       className="bg-white rounded-card border border-gold/10 p-5 shadow-card card-hover animate-slide-up"
       style={{ animationDelay: delay, animationFillMode: 'both' }}
     >
       <div className="flex items-center gap-3 mb-3">
-        <div className="w-9 h-9 rounded-full bg-navy flex items-center justify-center text-lg flex-shrink-0">
-          {message.avatar}
+        <div className="w-10 h-10 rounded-full bg-navy flex items-center justify-center text-lg flex-shrink-0">
+          {message.avatar || '💌'}
         </div>
-        <div>
-          <p className="font-semibold text-navy text-sm">{message.author}</p>
-          <p className="text-xs text-gray-400">{message.createdAt}</p>
+        <div className="min-w-0">
+          <p className="font-semibold text-navy text-sm truncate">{message.author}</p>
+          <p className="text-xs text-gray-400">{formatMessageDate(message.createdAt)}</p>
         </div>
       </div>
       <p className="text-gray-700 text-sm leading-relaxed italic">
         "{message.text}"
       </p>
-    </div>
+    </article>
   )
 }
 
-// ─── Add message form ─────────────────────────────────────────────────────────
-
-function AddMessageForm({ onAdd, hasMessage }) {
-  const [text, setText] = useState('')
+function AddMessageForm({ currentUser, existingMessage, onSave }) {
+  const [text, setText] = useState(existingMessage?.text || '')
+  const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
-  const maxChars = 200
+  const [error, setError] = useState('')
+  const maxChars = 240
 
-  function handleSubmit() {
+  useEffect(() => {
+    setText(existingMessage?.text || '')
+    setSaved(false)
+    setError('')
+  }, [existingMessage?.text])
+
+  async function handleSubmit() {
     const trimmed = text.trim()
-    if (!trimmed || trimmed.length < 5) return
-    onAdd(trimmed)
-    setText('')
-    setSaved(true)
-  }
+    if (trimmed.length < 5) return
 
-  if (hasMessage || saved) {
-    return (
-      <div className="text-center py-4">
-        <div className="text-3xl mb-2">✉️</div>
-        <p className="text-sm text-gold-dark font-medium">
-          Tu mensaje para Maximiliano ya está guardado 💛
-        </p>
-      </div>
-    )
+    setSaving(true)
+    setError('')
+    try {
+      await onSave(trimmed)
+      setSaved(true)
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar el mensaje')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
-    <div className="space-y-3">
+    <div className="bg-surface-soft rounded-xl2 border border-gold/15 p-5 sm:p-6 shadow-card">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-10 h-10 rounded-full bg-navy flex items-center justify-center text-lg">
+          {currentUser.avatar}
+        </div>
+        <div>
+          <p className="font-medium text-navy text-sm">
+            {currentUser.displayName}, deja tu mensaje para Maxi
+          </p>
+          <p className="text-xs text-gray-400">
+            {existingMessage ? 'Puedes actualizarlo cuando quieras.' : 'Quedará guardado con tu nombre.'}
+          </p>
+        </div>
+      </div>
+
       <textarea
         value={text}
-        onChange={e => setText(e.target.value.slice(0, maxChars))}
+        onChange={event => {
+          setText(event.target.value.slice(0, maxChars))
+          setSaved(false)
+        }}
         placeholder="Escribe un deseo, consejo o mensaje para Maximiliano..."
-        rows={3}
+        rows={4}
         className="w-full px-4 py-3 rounded-xl border border-gray-200 text-sm
                    text-navy placeholder-gray-400 resize-none
                    focus:outline-none focus:ring-2 focus:ring-gold/30 focus:border-gold"
       />
-      <div className="flex items-center justify-between">
+
+      <div className="flex flex-wrap items-center justify-between gap-3 mt-3">
         <span className="text-xs text-gray-400">{text.length}/{maxChars}</span>
-        <Button size="sm" onClick={handleSubmit} disabled={text.trim().length < 5}>
-          Enviar mensaje 💌
+        <Button size="sm" onClick={handleSubmit} loading={saving} disabled={text.trim().length < 5}>
+          {existingMessage ? 'Actualizar mensaje' : 'Enviar mensaje'}
         </Button>
       </div>
+
+      {saved && (
+        <p className="mt-3 text-sm text-gold-dark font-medium">
+          Tu mensaje para Maximiliano quedó guardado.
+        </p>
+      )}
+      {error && <p className="mt-3 text-sm text-live font-medium">{error}</p>}
     </div>
   )
 }
 
-// ─── Main section ─────────────────────────────────────────────────────────────
-
 export default function MessagesSection() {
-  const { currentUser } = useStore()
-  const [messages, setMessages] = useState([])
-
-  useEffect(() => {
-    const stored = loadMessages()
-    // Show seeds only if no real messages yet
-    setMessages(stored.length > 0 ? stored : SEED_MESSAGES)
-  }, [])
-
-  const userHasMessage = currentUser
-    ? messages.some(m => m.userId === currentUser.id)
-    : false
-
-  function handleAdd(text) {
-    const newMsg = {
-      id: `m_${Date.now()}`,
-      userId:    currentUser.id,
-      author:    currentUser.displayName,
-      avatar:    currentUser.avatar || '💌',
-      text,
-      createdAt: new Date().toLocaleDateString('es', { day: 'numeric', month: 'short', year: 'numeric' }),
-    }
-    const updated = [newMsg, ...messages.filter(m => m.id.startsWith('s') ? true : m.userId !== currentUser.id)]
-    setMessages(updated)
-    saveMessages(updated.filter(m => !m.id.startsWith('s')))
-  }
+  const { currentUser, maxiMessages, saveMaxiMessage } = useStore()
+  const sortedMessages = useMemo(
+    () => [...maxiMessages].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+    [maxiMessages]
+  )
+  const existingMessage = currentUser
+    ? sortedMessages.find(message => message.userId === currentUser.id)
+    : null
 
   return (
-    <section className="py-16">
-      {/* Section header */}
-      <div className="text-center mb-10">
-        <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-3">
-          Para la futura leyenda
-        </p>
-        <h2 className="font-display text-3xl sm:text-4xl font-bold text-navy tracking-wide mb-3">
-          MENSAJES PARA MAXIMILIANO
-        </h2>
-        <p className="text-gray-500 text-sm max-w-md mx-auto leading-relaxed">
-          Deja un mensaje, un deseo o un consejo que guardará para siempre.
-          Cuando crezca, sabrá cuántas personas lo esperaban.
-        </p>
+    <section className="animate-fade-in">
+      <div className="grid lg:grid-cols-[0.8fr_1.2fr] gap-6 lg:gap-8 items-start mb-10">
+        <div>
+          <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-2">
+            Para la futura leyenda
+          </p>
+          <h1 className="font-display text-4xl sm:text-5xl font-bold text-navy tracking-wide leading-tight">
+            MENSAJES A MAXI
+          </h1>
+          <p className="text-gray-500 text-sm mt-4 leading-relaxed max-w-lg">
+            Una recopilación de deseos, consejos y cariño para Maximiliano,
+            guardada con el autor de cada mensaje.
+          </p>
+        </div>
+
+        {currentUser ? (
+          <AddMessageForm
+            currentUser={currentUser}
+            existingMessage={existingMessage}
+            onSave={saveMaxiMessage}
+          />
+        ) : (
+          <div className="bg-white rounded-card border border-gray-100 p-6 shadow-card">
+            <h2 className="font-display text-xl font-bold text-navy tracking-wide mb-2">
+              Escribe para Maximiliano
+            </h2>
+            <p className="text-sm text-gray-500 leading-relaxed mb-5">
+              Inicia sesión o crea tu cuenta para dejar un mensaje con tu nombre.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              <Link to="/login">
+                <Button size="sm">Entrar</Button>
+              </Link>
+              <Link to="/register">
+                <Button size="sm" variant="secondary">Registrarme</Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Add message (only for logged-in users) */}
-      {currentUser ? (
-        <div className="bg-surface-soft rounded-xl2 border border-gold/15 p-6 mb-10 max-w-lg mx-auto">
-          <div className="flex items-center gap-2 mb-4">
-            <span className="text-xl">{currentUser.avatar}</span>
-            <p className="font-medium text-navy text-sm">
-              {currentUser.displayName}, ¿qué le dices a Maximiliano?
-            </p>
-          </div>
-          <AddMessageForm onAdd={handleAdd} hasMessage={userHasMessage} />
+      <div className="flex items-end justify-between gap-4 mb-4">
+        <div>
+          <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-1">
+            Recopilación
+          </p>
+          <h2 className="font-display text-2xl font-bold text-navy tracking-wide">
+            TODOS LOS MENSAJES
+          </h2>
+        </div>
+        <span className="text-xs text-gray-400">
+          {sortedMessages.length} {sortedMessages.length === 1 ? 'mensaje' : 'mensajes'}
+        </span>
+      </div>
+
+      {sortedMessages.length > 0 ? (
+        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {sortedMessages.map((message, index) => (
+            <MessageCard key={message.id} message={message} index={index} />
+          ))}
         </div>
       ) : (
-        <div className="text-center mb-10">
-          <p className="text-sm text-gray-500 mb-3">
-            Inicia sesión para dejar tu mensaje
-          </p>
-          <a href="#/login">
-            <Button variant="outline" size="sm">Entrar para escribir</Button>
-          </a>
-        </div>
-      )}
-
-      {/* Message wall */}
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {messages.map((msg, i) => (
-          <MessageCard key={msg.id} message={msg} index={i} />
-        ))}
-      </div>
-
-      {messages.length === 0 && (
-        <div className="text-center py-12 text-gray-400">
-          <div className="text-5xl mb-3">✉️</div>
-          <p className="text-sm">Sé el primero en dejar un mensaje</p>
+        <div className="text-center py-16 text-gray-400 bg-white rounded-card border border-gray-100">
+          <div className="text-5xl mb-3">💌</div>
+          <p className="text-sm">Sé el primero en dejar un mensaje para Maxi.</p>
         </div>
       )}
     </section>
