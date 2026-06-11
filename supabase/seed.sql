@@ -3,10 +3,7 @@
 
 insert into public.users (id, username, display_name, email, role, password_hash, avatar, approved, created_at)
 values
-  ('u001', 'admin', 'Organizador', 'admin@example.com', 'admin', 'admin123', '🏆', true, '2026-06-01T00:00:00Z'),
-  ('u002', 'carlos', 'Carlos Pérez', 'carlos@example.com', 'participant', 'pass123', '⚽', true, '2026-06-02T00:00:00Z'),
-  ('u003', 'ana', 'Ana García', 'ana@example.com', 'participant', 'pass123', '🌟', true, '2026-06-02T00:00:00Z'),
-  ('u004', 'pedro', 'Pedro Martínez', 'pedro@example.com', 'participant', 'pass123', '🎯', false, '2026-06-03T00:00:00Z')
+  ('u001', 'admin', 'Organizador', 'g.moyano91@gmail.com', 'admin', 'eic6vpBphNPHiEBnhDcN', '🏆', true, '2026-06-01T00:00:00Z')
 on conflict (id) do update set
   username = excluded.username,
   display_name = excluded.display_name,
