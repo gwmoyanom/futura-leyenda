@@ -14,14 +14,6 @@ npm run dev
 # Open http://localhost:5173
 ```
 
-## Demo accounts
-
-| Role         | Username | Password  |
-|-------------|----------|-----------|
-| Admin        | `admin`  | `admin123` |
-| Participant  | `carlos` | `pass123`  |
-| Participant  | `ana`    | `pass123`  |
-
 ## Project structure
 
 ```

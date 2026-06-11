@@ -97,13 +97,6 @@ export function LoginPage() {
         <Button type="submit" loading={loading} className="w-full" size="lg">
           Entrar
         </Button>
-
-        {/* Demo hint */}
-        <div className="bg-gold/10 rounded-xl p-3 text-xs text-gold-dark space-y-1">
-          <p className="font-semibold">Accesos de prueba:</p>
-          <p>Admin: <code className="bg-white/60 px-1 rounded">admin</code> / <code className="bg-white/60 px-1 rounded">admin123</code></p>
-          <p>Participante: <code className="bg-white/60 px-1 rounded">carlos</code> / <code className="bg-white/60 px-1 rounded">pass123</code></p>
-        </div>
       </form>
 
       <p className="text-center text-sm text-gray-500 mt-6">
@@ -193,7 +186,7 @@ export function RegisterPage() {
         <Input
           label="Nombre para mostrar *"
           name="displayName"
-          placeholder="Carlos Pérez"
+          placeholder="Tu nombre"
           value={form.displayName}
           onChange={handleChange}
           autoFocus
@@ -201,7 +194,7 @@ export function RegisterPage() {
         <Input
           label="Nombre de usuario *"
           name="username"
-          placeholder="carlos_perez"
+          placeholder="tu_usuario"
           value={form.username}
           onChange={handleChange}
           hint="Solo letras, números y guion bajo"
@@ -210,7 +203,7 @@ export function RegisterPage() {
           label="Email (opcional)"
           name="email"
           type="email"
-          placeholder="carlos@email.com"
+          placeholder="tu@email.com"
           value={form.email}
           onChange={handleChange}
         />

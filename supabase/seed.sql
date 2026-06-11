@@ -1,18 +1,9 @@
 -- Futura Leyenda - initial data
 -- Run after schema.sql. Safe to run more than once.
 
-insert into public.users (id, username, display_name, email, role, password_hash, avatar, approved, created_at)
-values
-  ('u001', 'admin', 'Organizador', 'g.moyano91@gmail.com', 'admin', 'eic6vpBphNPHiEBnhDcN', '🏆', true, '2026-06-01T00:00:00Z')
-on conflict (id) do update set
-  username = excluded.username,
-  display_name = excluded.display_name,
-  email = excluded.email,
-  role = excluded.role,
-  password_hash = excluded.password_hash,
-  avatar = excluded.avatar,
-  approved = excluded.approved,
-  created_at = excluded.created_at;
+-- User accounts are intentionally not seeded here. Create the organizer/admin
+-- directly in Supabase so no reusable access credentials are published.
+
 
 insert into public.matches (id, phase, group_name, home_team, away_team, kickoff, venue, result, status)
 values
@@ -98,18 +89,6 @@ on conflict (id) do update set
   result = excluded.result,
   status = excluded.status;
 
-insert into public.predictions (id, user_id, match_id, prediction, submitted_at, created_at, updated_at, points_earned)
-values
-  ('p001', 'u002', 'm004', '{"home":2,"away":0}', '2026-06-14T10:00:00Z', '2026-06-14T10:00:00Z', '2026-06-14T10:00:00Z', 1),
-  ('p002', 'u002', 'm005', '{"home":1,"away":1}', '2026-06-14T10:05:00Z', '2026-06-14T10:05:00Z', '2026-06-14T10:05:00Z', null),
-  ('p003', 'u003', 'm004', '{"home":3,"away":1}', '2026-06-14T11:00:00Z', '2026-06-14T11:00:00Z', '2026-06-14T11:00:00Z', 1),
-  ('p004', 'u003', 'm005', '{"home":2,"away":0}', '2026-06-14T11:10:00Z', '2026-06-14T11:10:00Z', '2026-06-14T11:10:00Z', null)
-on conflict (user_id, match_id) do update set
-  prediction = excluded.prediction,
-  submitted_at = excluded.submitted_at,
-  updated_at = excluded.updated_at,
-  points_earned = excluded.points_earned;
-
 insert into public.maxi_messages (id, user_id, author, avatar, text, created_at, updated_at)
 values
   ('s1', null, 'La familia', '❤️', 'Maximiliano, que este primer Mundial sea el inicio de una vida llena de goles, sueños y amor. ¡Te amamos!', '2026-06-01T00:00:00Z', '2026-06-01T00:00:00Z'),
@@ -164,7 +143,6 @@ values (
 on conflict (key) do update set
   value = excluded.value,
   updated_at = now();
-
 
 
 
