@@ -249,8 +249,18 @@ const useStore = create((set, get) => ({
 
   /** Admin: update a match result */
   adminUpdateMatch: async (matchId, updates) => {
-    storageUpdateMatch(matchId, updates)
+    const updated = await storageUpdateMatch(matchId, updates)
+
+    if (updated) {
+      const { matches } = get()
+      set({
+        matches: matches.map(match => match.id === matchId ? updated : match),
+      })
+      return updated
+    }
+
     await get().reloadMatches()
+    return null
   },
 
   /** Admin: approve or ban a user */

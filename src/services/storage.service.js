@@ -72,6 +72,8 @@ function mapMatch(row) {
     venue: row.venue,
     result: row.result,
     status: row.status,
+    resultUpdatedAt: row.result_updated_at,
+    updatedAt: row.updated_at,
   }
 }
 
@@ -85,6 +87,8 @@ function toMatchRow(matchId, updates) {
   if ('venue' in updates) row.venue = updates.venue
   if ('result' in updates) row.result = updates.result
   if ('status' in updates) row.status = updates.status
+  if ('resultUpdatedAt' in updates) row.result_updated_at = updates.resultUpdatedAt
+  if ('updatedAt' in updates) row.updated_at = updates.updatedAt
   return row
 }
 
@@ -184,18 +188,32 @@ export async function getMatches() {
 }
 
 export async function updateMatch(matchId, updates) {
+  const now = new Date().toISOString()
+
   if (hasSupabase) {
-    await supabaseRequest(`matches?id=eq.${encodeURIComponent(matchId)}`, {
+    const row = toMatchRow(matchId, updates)
+    if ('result' in updates) row.result_updated_at = now
+    if ('result' in updates || 'status' in updates) row.updated_at = now
+
+    const rows = await supabaseRequest(`matches?id=eq.${encodeURIComponent(matchId)}`, {
       method: 'PATCH',
-      body: toMatchRow(matchId, updates),
-      prefer: 'return=minimal',
+      body: row,
+      prefer: 'return=representation',
     })
-    return
+    return rows?.[0] ? mapMatch(rows[0]) : null
   }
 
   const overrides = readLocal('matches_overrides') || {}
-  overrides[matchId] = { ...overrides[matchId], ...updates }
+  overrides[matchId] = {
+    ...overrides[matchId],
+    ...updates,
+    ...('result' in updates ? { resultUpdatedAt: now } : {}),
+    ...('result' in updates || 'status' in updates ? { updatedAt: now } : {}),
+  }
   writeLocal('matches_overrides', overrides)
+
+  const matches = await getMatches()
+  return matches.find(match => match.id === matchId) || null
 }
 
 // ─── Users ──────────────────────────────────────────────────────────────────

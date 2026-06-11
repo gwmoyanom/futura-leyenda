@@ -47,14 +47,26 @@ function AdminTabs({ activeTab, onTabChange }) {
 function MatchesTab() {
   const { matches, adminUpdateMatch } = useStore()
   const [saved, setSaved] = useState(false)
+  const [savingMatchId, setSavingMatchId] = useState(null)
+  const [saveError, setSaveError] = useState('')
 
   const grouped = groupMatchesByDate(matches)
   const dateKeys = Object.keys(grouped).sort()
 
   async function handleSave(matchId, updates) {
-    await adminUpdateMatch(matchId, updates)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 2000)
+    setSavingMatchId(matchId)
+    setSaveError('')
+    setSaved(false)
+
+    try {
+      await adminUpdateMatch(matchId, updates)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 2000)
+    } catch (err) {
+      setSaveError(err.message || 'No se pudo guardar el resultado del partido')
+    } finally {
+      setSavingMatchId(null)
+    }
   }
 
   return (
@@ -68,7 +80,17 @@ function MatchesTab() {
             ✓ Guardado
           </span>
         )}
+        {savingMatchId && (
+          <span className="text-xs text-gold-dark font-medium bg-gold/10 px-3 py-1.5 rounded-lg">
+            Guardando...
+          </span>
+        )}
       </div>
+      {saveError && (
+        <Alert variant="error" className="mb-4">
+          {saveError}
+        </Alert>
+      )}
 
       <div className="space-y-8">
         {dateKeys.map(dateKey => (

@@ -22,8 +22,13 @@ create table if not exists public.matches (
   kickoff timestamptz not null,
   venue text,
   result jsonb,
-  status text not null default 'upcoming' check (status in ('upcoming', 'live', 'finished'))
+  status text not null default 'upcoming' check (status in ('upcoming', 'live', 'finished')),
+  result_updated_at timestamptz,
+  updated_at timestamptz not null default now()
 );
+
+alter table public.matches add column if not exists result_updated_at timestamptz;
+alter table public.matches add column if not exists updated_at timestamptz not null default now();
 
 create table if not exists public.predictions (
   id text primary key,
@@ -56,6 +61,7 @@ create table if not exists public.app_config (
 
 create index if not exists idx_matches_kickoff on public.matches(kickoff);
 create index if not exists idx_matches_phase on public.matches(phase);
+create index if not exists idx_matches_status on public.matches(status);
 create index if not exists idx_predictions_user_id on public.predictions(user_id);
 create index if not exists idx_predictions_match_id on public.predictions(match_id);
 create index if not exists idx_maxi_messages_created_at on public.maxi_messages(created_at desc);
