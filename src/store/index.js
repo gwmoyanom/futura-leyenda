@@ -24,6 +24,7 @@ import {
   updateUser as storageUpdateUser,
 } from '@/services/storage.service.js'
 import { buildLeaderboard, calculateUserScore } from '@/utils/scoring.utils.js'
+import { getMatchApiUpdates } from '@/services/matches-api.service.js'
 
 const useStore = create((set, get) => ({
   // ─── Auth slice ───────────────────────────────────────────────────────────
@@ -261,6 +262,31 @@ const useStore = create((set, get) => ({
 
     await get().reloadMatches()
     return null
+  },
+
+  /** Admin: sync match status/results from the configured online API */
+  adminSyncMatchesFromApi: async () => {
+    const { matches, config } = get()
+    const competitionCode = config?.api?.competitionCode || import.meta.env.VITE_FOOTBALL_DATA_COMPETITION || 'WC'
+    const sync = await getMatchApiUpdates(matches, { competitionCode, force: true })
+    const updatedMatches = []
+
+    for (const change of sync.updates) {
+      const updated = await storageUpdateMatch(change.matchId, change.updates)
+      if (updated) updatedMatches.push({ ...change, updated })
+    }
+
+    if (updatedMatches.length > 0) {
+      const latestById = new Map(updatedMatches.map(item => [item.matchId, item.updated]))
+      set({
+        matches: get().matches.map(match => latestById.get(match.id) || match),
+      })
+    }
+
+    return {
+      ...sync,
+      updated: updatedMatches,
+    }
   },
 
   /** Admin: approve or ban a user */

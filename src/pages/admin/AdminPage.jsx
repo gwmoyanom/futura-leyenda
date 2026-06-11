@@ -12,6 +12,7 @@ import MatchCard from '@/components/participant/MatchCard.jsx'
 import Button from '@/components/ui/Button.jsx'
 import { Spinner, Badge, Alert } from '@/components/ui/index.jsx'
 import { groupMatchesByDate, formatDateLabel } from '@/utils/date.utils.js'
+import { MATCH_SYNC_INTERVAL_MS } from '@/services/matches-api.service.js'
 import clsx from 'clsx'
 
 // ─── Tab navigation ───────────────────────────────────────────────────────────
@@ -45,13 +46,27 @@ function AdminTabs({ activeTab, onTabChange }) {
 // ─── Matches tab ──────────────────────────────────────────────────────────────
 
 function MatchesTab() {
-  const { matches, adminUpdateMatch } = useStore()
+  const { matches, adminUpdateMatch, adminSyncMatchesFromApi } = useStore()
   const [saved, setSaved] = useState(false)
   const [savingMatchId, setSavingMatchId] = useState(null)
   const [saveError, setSaveError] = useState('')
+  const [syncing, setSyncing] = useState(false)
+  const [autoSync, setAutoSync] = useState(false)
+  const [syncSummary, setSyncSummary] = useState(null)
+  const [syncError, setSyncError] = useState('')
 
   const grouped = groupMatchesByDate(matches)
   const dateKeys = Object.keys(grouped).sort()
+
+  useEffect(() => {
+    if (!autoSync) return undefined
+
+    const interval = window.setInterval(() => {
+      handleApiSync({ silent: true })
+    }, MATCH_SYNC_INTERVAL_MS)
+
+    return () => window.clearInterval(interval)
+  }, [autoSync, matches, syncing])
 
   async function handleSave(matchId, updates) {
     setSavingMatchId(matchId)
@@ -69,26 +84,72 @@ function MatchesTab() {
     }
   }
 
+  async function handleApiSync({ silent = false } = {}) {
+    if (syncing) return
+
+    setSyncing(true)
+    setSyncError('')
+    if (!silent) setSyncSummary(null)
+
+    try {
+      const result = await adminSyncMatchesFromApi()
+      setSyncSummary(result)
+    } catch (err) {
+      setSyncError(err.message || 'No se pudo sincronizar con la API de partidos')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-4 mb-4 lg:flex-row lg:items-center lg:justify-between">
         <p className="text-sm text-gray-500">
           Actualiza resultados y estado de cada partido
         </p>
-        {saved && (
-          <span className="text-xs text-pitch-dark font-medium bg-pitch/10 px-3 py-1.5 rounded-lg">
-            ✓ Guardado
-          </span>
-        )}
-        {savingMatchId && (
-          <span className="text-xs text-gold-dark font-medium bg-gold/10 px-3 py-1.5 rounded-lg">
-            Guardando...
-          </span>
-        )}
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-600">
+            <input
+              type="checkbox"
+              checked={autoSync}
+              onChange={event => setAutoSync(event.target.checked)}
+              className="h-4 w-4 accent-gold"
+            />
+            Auto cada {Math.round(MATCH_SYNC_INTERVAL_MS / 1000)}s
+          </label>
+          <Button size="sm" variant="secondary" loading={syncing} onClick={() => handleApiSync()}>
+            Sincronizar API
+          </Button>
+          {saved && (
+            <span className="text-xs text-pitch-dark font-medium bg-pitch/10 px-3 py-1.5 rounded-lg">
+              ✓ Guardado
+            </span>
+          )}
+          {savingMatchId && (
+            <span className="text-xs text-gold-dark font-medium bg-gold/10 px-3 py-1.5 rounded-lg">
+              Guardando...
+            </span>
+          )}
+        </div>
       </div>
       {saveError && (
         <Alert variant="error" className="mb-4">
           {saveError}
+        </Alert>
+      )}
+      {syncError && (
+        <Alert variant="error" className="mb-4">
+          {syncError}
+        </Alert>
+      )}
+      {syncSummary && (
+        <Alert variant={syncSummary.updated.length > 0 ? 'success' : 'info'} className="mb-4">
+          API revisada: {syncSummary.apiCount} partidos online, {syncSummary.updated.length} cambios aplicados.
+          {syncSummary.updated.length > 0 && (
+            <span className="block mt-1">
+              {syncSummary.updated.slice(0, 4).map(item => item.changes.join(', ')).join(' · ')}
+            </span>
+          )}
         </Alert>
       )}
 

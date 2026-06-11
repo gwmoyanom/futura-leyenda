@@ -10,26 +10,26 @@
 
 const API_BASE = 'https://api.football-data.org/v4'
 const CACHE_KEY = 'polla_matches_api_cache'
-const CACHE_EXPIRY = 1000 * 60 * 5  // 5 minutes
+const CACHE_EXPIRY = 1000 * 30
+const API_TOKEN = import.meta.env.VITE_FOOTBALL_DATA_API_KEY
+export const MATCH_SYNC_INTERVAL_MS = Number(import.meta.env.VITE_MATCH_SYNC_INTERVAL_MS || 60000)
 
 /**
  * Get cached matches or fetch fresh data if cache expired
  * @param {string} competitionCode - e.g., 'WC' for World Cup
  * @returns {Promise<Array>} Array of matches
  */
-export async function fetchMatchesFromAPI(competitionCode = 'WC') {
+export async function fetchMatchesFromAPI(competitionCode = 'WC', { force = false } = {}) {
   const cached = getCache()
-  if (cached && cached.data) {
+  if (!force && cached && cached.data) {
     return cached.data
   }
 
   try {
     const url = `${API_BASE}/competitions/${competitionCode}/matches`
+    const headers = API_TOKEN ? { 'X-Auth-Token': API_TOKEN } : {}
     const response = await fetch(url, {
-      headers: {
-        // Note: football-data.org works without an API key for basic requests
-        // For production, add: 'X-Auth-Token': import.meta.env.VITE_FOOTBALL_DATA_API_KEY
-      }
+      headers,
     })
 
     if (!response.ok) {
@@ -51,20 +51,51 @@ export async function fetchMatchesFromAPI(competitionCode = 'WC') {
 }
 
 /**
- * Update a single match result when admin scores it
- * For now this is local-only. Could be extended to sync with backend.
+ * Compare online API data against local matches and return only meaningful
+ * changes that should be persisted.
  */
-export function updateMatchResult(matchId, homeScore, awayScore) {
-  const matches = getCache()?.data || []
-  const match = matches.find(m => m.id === matchId)
+export async function getMatchApiUpdates(localMatches, { competitionCode = 'WC', force = true } = {}) {
+  const apiMatches = await fetchMatchesFromAPI(competitionCode, { force })
+  const syncedAt = new Date().toISOString()
+  const updates = []
 
-  if (match) {
-    match.result = { home: homeScore, away: awayScore }
-    match.status = 'finished'
-    setCache(matches)
+  localMatches.forEach(localMatch => {
+    const apiMatch = findApiMatch(localMatch, apiMatches)
+    if (!apiMatch) return
+
+    const next = {
+      lastSyncedAt: syncedAt,
+      apiSource: 'football-data.org',
+      apiMatchId: String(apiMatch.apiId),
+    }
+    const changes = []
+
+    if (apiMatch.status && apiMatch.status !== localMatch.status) {
+      next.status = apiMatch.status
+      changes.push(`estado ${localMatch.status} → ${apiMatch.status}`)
+    }
+
+    if (apiMatch.result && !sameResult(apiMatch.result, localMatch.result)) {
+      next.result = apiMatch.result
+      changes.push(`marcador ${formatResult(localMatch.result)} → ${formatResult(apiMatch.result)}`)
+    }
+
+    if (changes.length > 0) {
+      updates.push({
+        matchId: localMatch.id,
+        updates: next,
+        apiMatch,
+        changes,
+      })
+    }
+  })
+
+  return {
+    checked: localMatches.length,
+    apiCount: apiMatches.length,
+    updates,
+    syncedAt,
   }
-
-  return match
 }
 
 /**
@@ -98,7 +129,8 @@ export async function getMergedMatches(localMatches, apiMatches) {
 
 function normalizeMatches(apiMatches) {
   return apiMatches.map(match => ({
-    id: `m${match.id}`,
+    apiId: match.id,
+    id: `api-${match.id}`,
     phase: determinatePhase(match.stage),
     group: match.group?.charAt(0) || null,
     homeTeam: {
@@ -113,13 +145,10 @@ function normalizeMatches(apiMatches) {
     },
     kickoff: match.utcDate,
     venue: match.venue || 'TBD',
-    result: match.score.fullTime?.home !== null
-      ? {
-          home: match.score.fullTime.home,
-          away: match.score.fullTime.away,
-        }
-      : null,
+    result: extractScore(match),
     status: mapStatus(match.status),
+    minute: match.minute,
+    lastUpdated: match.lastUpdated,
   }))
 }
 
@@ -137,9 +166,74 @@ function determinatePhase(stage) {
 function mapStatus(apiStatus) {
   const status = apiStatus.toUpperCase()
   if (status === 'FINISHED') return 'finished'
-  if (status === 'LIVE' || status === 'IN_PLAY') return 'live'
-  if (status === 'PAUSED') return 'paused'
+  if (status === 'LIVE' || status === 'IN_PLAY' || status === 'PAUSED') return 'live'
   return 'upcoming'
+}
+
+function extractScore(match) {
+  const scoreCandidates = [
+    match.score?.fullTime,
+    match.score?.regularTime,
+    match.score?.halfTime,
+  ]
+  const score = scoreCandidates.find(candidate => hasScore(candidate))
+  if (score) return { home: score.home, away: score.away }
+
+  const lastGoal = [...(match.goals || [])].reverse().find(goal => hasScore(goal.score))
+  if (lastGoal?.score) {
+    return {
+      home: lastGoal.score.home,
+      away: lastGoal.score.away,
+    }
+  }
+
+  return null
+}
+
+function hasScore(score) {
+  return Number.isFinite(score?.home) && Number.isFinite(score?.away)
+}
+
+function sameResult(a, b) {
+  if (!a && !b) return true
+  if (!a || !b) return false
+  return a.home === b.home && a.away === b.away
+}
+
+function formatResult(result) {
+  if (!result) return '--'
+  return `${result.home}-${result.away}`
+}
+
+function normalizeText(value) {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]/g, '')
+}
+
+function sameTeam(localTeam, apiTeam) {
+  if (!localTeam || !apiTeam) return false
+  if (localTeam.code && apiTeam.code && localTeam.code === apiTeam.code) return true
+  return normalizeText(localTeam.name) === normalizeText(apiTeam.name)
+}
+
+function sameMatchDay(localKickoff, apiKickoff) {
+  const localDate = new Date(localKickoff)
+  const apiDate = new Date(apiKickoff)
+  if (Number.isNaN(localDate.getTime()) || Number.isNaN(apiDate.getTime())) return false
+
+  const hours = Math.abs(localDate.getTime() - apiDate.getTime()) / (1000 * 60 * 60)
+  return hours <= 18
+}
+
+function findApiMatch(localMatch, apiMatches) {
+  return apiMatches.find(apiMatch =>
+    sameMatchDay(localMatch.kickoff, apiMatch.kickoff) &&
+    sameTeam(localMatch.homeTeam, apiMatch.homeTeam) &&
+    sameTeam(localMatch.awayTeam, apiMatch.awayTeam)
+  )
 }
 
 function getFlagEmoji(countryCode) {

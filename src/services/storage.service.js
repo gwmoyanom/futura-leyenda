@@ -72,6 +72,9 @@ function mapMatch(row) {
     venue: row.venue,
     result: row.result,
     status: row.status,
+    apiSource: row.api_source,
+    apiMatchId: row.api_match_id,
+    lastSyncedAt: row.last_synced_at,
     resultUpdatedAt: row.result_updated_at,
     updatedAt: row.updated_at,
   }
@@ -87,6 +90,9 @@ function toMatchRow(matchId, updates) {
   if ('venue' in updates) row.venue = updates.venue
   if ('result' in updates) row.result = updates.result
   if ('status' in updates) row.status = updates.status
+  if ('apiSource' in updates) row.api_source = updates.apiSource
+  if ('apiMatchId' in updates) row.api_match_id = updates.apiMatchId
+  if ('lastSyncedAt' in updates) row.last_synced_at = updates.lastSyncedAt
   if ('resultUpdatedAt' in updates) row.result_updated_at = updates.resultUpdatedAt
   if ('updatedAt' in updates) row.updated_at = updates.updatedAt
   return row
