@@ -26,7 +26,7 @@ export function getSession() {
 }
 
 /** Persists a user session */
-function saveSession(user) {
+export function saveSession(user) {
   // Never store the passwordHash in the session object
   const { passwordHash: _, ...safeUser } = user
   localStorage.setItem(SESSION_KEY, JSON.stringify(safeUser))

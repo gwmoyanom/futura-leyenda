@@ -7,6 +7,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import useStore from '@/store/index.js'
 
+const AVATAR_OPTIONS = ['⚽', '🏆', '🎯', '⭐', '🌟', '🔥', '🥅', '🧤', '💛', '👶', '🎉', '🚀', '🇪🇨', '🇦🇷', '🇧🇷', '🇲🇽']
+
 function TickerStrip({ matches = [], messages = [] }) {
   const liveOrRecent = matches.filter(m => m.status === 'live' || m.status === 'finished')
   const messageItems = messages.slice(0, 8)
@@ -92,7 +94,90 @@ function NavLink({ to, children, onClick, mobile = false }) {
   )
 }
 
-function Navbar({ currentUser, onLogout }) {
+function UserMenu({ currentUser, onLogout, onUpdateUser }) {
+  const [open, setOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  async function handleAvatarSelect(avatar) {
+    if (avatar === currentUser.avatar || saving) return
+
+    setSaving(true)
+    setError('')
+    try {
+      await onUpdateUser({ avatar })
+    } catch (err) {
+      setError(err.message || 'No se pudo guardar el avatar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        onClick={() => setOpen(value => !value)}
+        className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+        aria-expanded={open}
+      >
+        <span className="text-lg leading-none">{currentUser.avatar || '⚽'}</span>
+        <span className="hidden max-w-28 truncate font-medium sm:inline">{currentUser.displayName}</span>
+        <span className="text-white/35">▾</span>
+      </button>
+
+      {open && (
+        <div className="absolute right-0 mt-2 w-72 rounded-xl border border-gray-100 bg-white p-4 text-navy shadow-card-hover">
+          <div className="mb-3">
+            <p className="text-sm font-semibold">{currentUser.displayName}</p>
+            <p className="text-xs text-gray-400">@{currentUser.username}</p>
+          </div>
+
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Avatar
+            </p>
+            <div className="grid grid-cols-8 gap-2">
+              {AVATAR_OPTIONS.map(avatar => (
+                <button
+                  key={avatar}
+                  type="button"
+                  onClick={() => handleAvatarSelect(avatar)}
+                  disabled={saving}
+                  className={clsx(
+                    'flex h-8 w-8 items-center justify-center rounded-lg border text-lg transition-colors',
+                    avatar === currentUser.avatar
+                      ? 'border-gold bg-gold/15 shadow-gold-sm'
+                      : 'border-gray-200 bg-white hover:border-gold hover:bg-gold/5',
+                    saving && 'cursor-wait opacity-70'
+                  )}
+                  aria-label={`Usar avatar ${avatar}`}
+                >
+                  {avatar}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {saving && <p className="mt-3 text-xs font-medium text-gold-dark">Guardando...</p>}
+          {error && <p className="mt-3 text-xs font-medium text-live">{error}</p>}
+
+          <div className="mt-4 border-t border-gray-100 pt-3">
+            <button
+              type="button"
+              onClick={onLogout}
+              className="w-full rounded-lg px-3 py-2 text-left text-sm font-semibold text-gray-500 transition-colors hover:bg-gray-50 hover:text-live"
+            >
+              Salir
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function Navbar({ currentUser, onLogout, onUpdateUser }) {
   const isAdmin = currentUser?.role === 'admin'
   const [mobileOpen, setMobileOpen] = useState(false)
   const closeMobile = () => setMobileOpen(false)
@@ -132,18 +217,11 @@ function Navbar({ currentUser, onLogout }) {
             <span className="text-xl leading-none">{mobileOpen ? '×' : '☰'}</span>
           </button>
           {currentUser ? (
-            <>
-              <span className="hidden sm:flex items-center gap-1.5 text-sm text-white/50">
-                <span>{currentUser.avatar}</span>
-                <span className="font-medium text-white/70">{currentUser.displayName}</span>
-              </span>
-              <button
-                onClick={onLogout}
-                className="text-white/40 hover:text-white/80 text-sm transition-colors px-2 py-1"
-              >
-                Salir
-              </button>
-            </>
+            <UserMenu
+              currentUser={currentUser}
+              onLogout={onLogout}
+              onUpdateUser={onUpdateUser}
+            />
           ) : (
             <>
               <Link to="/login" className="text-white/60 hover:text-white text-sm transition-colors px-3 py-2">
@@ -193,7 +271,7 @@ function Footer() {
 }
 
 export default function AppShell({ children }) {
-  const { currentUser, logout, matches, maxiMessages } = useStore()
+  const { currentUser, logout, matches, maxiMessages, updateCurrentUser } = useStore()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -205,7 +283,7 @@ export default function AppShell({ children }) {
     <div className="min-h-screen bg-surface flex flex-col font-body">
       <header className="sticky top-0 z-50">
         <TickerStrip matches={matches} messages={maxiMessages} />
-        <Navbar currentUser={currentUser} onLogout={handleLogout} />
+        <Navbar currentUser={currentUser} onLogout={handleLogout} onUpdateUser={updateCurrentUser} />
       </header>
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {children}

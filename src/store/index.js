@@ -8,7 +8,7 @@
  */
 
 import { create } from 'zustand'
-import { getSession, clearSession, login as authLogin, register as authRegister } from '@/services/auth.service.js'
+import { getSession, saveSession, clearSession, login as authLogin, register as authRegister } from '@/services/auth.service.js'
 import {
   deleteUser as storageDeleteUser,
   getMatches,
@@ -43,6 +43,21 @@ const useStore = create((set, get) => ({
 
   register: async (userData) => {
     return authRegister(userData)
+  },
+
+  updateCurrentUser: async (updates) => {
+    const { currentUser, users } = get()
+    if (!currentUser) return null
+
+    await storageUpdateUser(currentUser.id, updates)
+    const updatedUser = saveSession({ ...currentUser, ...updates })
+
+    set({
+      currentUser: updatedUser,
+      users: users.map(user => user.id === currentUser.id ? { ...user, ...updates } : user),
+    })
+
+    return updatedUser
   },
 
   // ─── Data slice ───────────────────────────────────────────────────────────
