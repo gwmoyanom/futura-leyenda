@@ -21,6 +21,12 @@ export function getMatchOutcome(homeGoals, awayGoals) {
   return 'draw'
 }
 
+function outcomeLabel(outcome) {
+  if (outcome === 'home') return 'victoria del local'
+  if (outcome === 'away') return 'victoria del visitante'
+  return 'empate'
+}
+
 /**
  * Calculates points for a single prediction against a real result.
  *
@@ -31,7 +37,7 @@ export function getMatchOutcome(homeGoals, awayGoals) {
  */
 export function scoreOnePrediction(prediction, result, rules) {
   if (!result || result.home === null || result.away === null) {
-    return { points: 0, reason: 'Partido sin resultado aún' }
+    return { points: 0, reason: 'Pendiente: el partido todavía no tiene resultado cargado.' }
   }
 
   const isExact =
@@ -41,7 +47,7 @@ export function scoreOnePrediction(prediction, result, rules) {
   if (isExact) {
     return {
       points: rules.exactScore.points,
-      reason: `Resultado exacto (${result.home}-${result.away}) 🎯`,
+      reason: `Marcador exacto: predijiste ${prediction.home}-${prediction.away} y terminó ${result.home}-${result.away}.`,
     }
   }
 
@@ -51,11 +57,14 @@ export function scoreOnePrediction(prediction, result, rules) {
   if (predictedOutcome === actualOutcome) {
     return {
       points: rules.correctResult.points,
-      reason: `Resultado correcto (${actualOutcome === 'draw' ? 'empate' : actualOutcome === 'home' ? 'local' : 'visitante'}) ✅`,
+      reason: `Acertaste el signo (${outcomeLabel(actualOutcome)}), pero no el marcador exacto.`,
     }
   }
 
-  return { points: 0, reason: 'Sin puntos ❌' }
+  return {
+    points: 0,
+    reason: `Sin puntos: predijiste ${outcomeLabel(predictedOutcome)} y el resultado fue ${outcomeLabel(actualOutcome)}.`,
+  }
 }
 
 /**

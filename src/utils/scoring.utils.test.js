@@ -41,13 +41,15 @@ describe('getMatchOutcome', () => {
 
 describe('scoreOnePrediction', () => {
   it('awards 3 points for an exact score', () => {
-    const { points } = scoreOnePrediction({ home: 2, away: 1 }, { home: 2, away: 1 }, rules)
+    const { points, reason } = scoreOnePrediction({ home: 2, away: 1 }, { home: 2, away: 1 }, rules)
     expect(points).toBe(3)
+    expect(reason).toContain('Marcador exacto')
   })
 
   it('awards 1 point for correct result but wrong score', () => {
-    const { points } = scoreOnePrediction({ home: 3, away: 1 }, { home: 2, away: 1 }, rules)
+    const { points, reason } = scoreOnePrediction({ home: 3, away: 1 }, { home: 2, away: 1 }, rules)
     expect(points).toBe(1)
+    expect(reason).toContain('Acertaste el signo')
   })
 
   it('awards 1 point for correct draw (different score)', () => {
@@ -61,13 +63,15 @@ describe('scoreOnePrediction', () => {
   })
 
   it('awards 0 points for wrong result', () => {
-    const { points } = scoreOnePrediction({ home: 2, away: 0 }, { home: 0, away: 1 }, rules)
+    const { points, reason } = scoreOnePrediction({ home: 2, away: 0 }, { home: 0, away: 1 }, rules)
     expect(points).toBe(0)
+    expect(reason).toContain('Sin puntos')
   })
 
   it('awards 0 points when result is null', () => {
-    const { points } = scoreOnePrediction({ home: 2, away: 0 }, null, rules)
+    const { points, reason } = scoreOnePrediction({ home: 2, away: 0 }, null, rules)
     expect(points).toBe(0)
+    expect(reason).toContain('Pendiente')
   })
 })
 

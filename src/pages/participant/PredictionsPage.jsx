@@ -5,7 +5,7 @@
  * - Mis Predicciones: predictions for group stage and knockout
  * - Tabla de Posiciones: group standings
  * - Llave Final: knockout bracket visualization
- * - Historial: prediction history and results
+ * - Puntuaciones: earned points and scoring reasons
  */
 
 import { useState, useEffect } from 'react'
@@ -15,7 +15,7 @@ import { getPredictionsLockCountdown } from '@/utils/date.utils.js'
 import clsx from 'clsx'
 import GroupStandings from '@/components/participant/GroupStandings.jsx'
 import KnockoutBracket from '@/components/participant/KnockoutBracket.jsx'
-import PredictionHistory from '@/components/participant/PredictionHistory.jsx'
+import PredictionScores from '@/components/participant/PredictionScores.jsx'
 import WorldCupSimulator from '@/components/participant/WorldCupSimulator.jsx'
 
 export default function PredictionsPage() {
@@ -41,7 +41,7 @@ export default function PredictionsPage() {
 
   const myPredictions = getMyPredictions()
   const myBracketResults = getMyBracketResults()
-  const { totalPoints } = getMyScore()
+  const { totalPoints, breakdown } = getMyScore()
   const isLocked = isPredictionLocked()
   const lockCountdown = config?.tournament?.inaugurationDate 
     ? getPredictionsLockCountdown(config.tournament.inaugurationDate)
@@ -102,7 +102,7 @@ export default function PredictionsPage() {
           { id: 'simulator', label: '🏟️ Predicciones' },
           { id: 'standings', label: '📊 Tabla' },
           { id: 'bracket', label: '🏆 Llave' },
-          { id: 'history', label: '📋 Historial' },
+          { id: 'scores', label: '⭐ Puntuaciones' },
         ].map(view => (
           <button
             key={view.id}
@@ -161,11 +161,11 @@ export default function PredictionsPage() {
         </div>
       )}
 
-      {/* HISTORY VIEW */}
-      {showView === 'history' && (
+      {/* SCORES VIEW */}
+      {showView === 'scores' && (
         <div>
-          <h2 className="font-display text-2xl font-bold text-navy mb-8">Historial de Predicciones</h2>
-          <PredictionHistory predictions={myPredictions} matches={matches} />
+          <h2 className="font-display text-2xl font-bold text-navy mb-8">Puntuaciones</h2>
+          <PredictionScores breakdown={breakdown} rules={config?.rules} />
         </div>
       )}
     </div>
