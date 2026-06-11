@@ -25,29 +25,23 @@ export async function fetchMatchesFromAPI(competitionCode = 'WC', { force = fals
     return cached.data
   }
 
-  try {
-    const url = `${API_BASE}/competitions/${competitionCode}/matches`
-    const headers = API_TOKEN ? { 'X-Auth-Token': API_TOKEN } : {}
-    const response = await fetch(url, {
-      headers,
-    })
+  const url = `${API_BASE}/competitions/${competitionCode}/matches`
+  const headers = API_TOKEN ? { 'X-Auth-Token': API_TOKEN } : {}
+  const response = await fetch(url, { headers })
 
-    if (!response.ok) {
-      throw new Error(`API Error: ${response.status} ${response.statusText}`)
-    }
-
-    const apiData = await response.json()
-    const matches = normalizeMatches(apiData.matches || [])
-
-    // Cache the results
-    setCache(matches)
-
-    return matches
-  } catch (error) {
-    console.error('Failed to fetch matches from API:', error)
-    // Return empty array if API fails - fall back to local data
-    return []
+  if (!response.ok) {
+    const detail = await readErrorDetail(response)
+    throw new Error(
+      `football-data.org respondió ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`
+    )
   }
+
+  const apiData = await response.json()
+  const matches = normalizeMatches(apiData.matches || [])
+
+  setCache(matches)
+
+  return matches
 }
 
 /**
@@ -127,21 +121,21 @@ export async function getMergedMatches(localMatches, apiMatches) {
 
 // ─── Private helpers ──────────────────────────────────────────────────────
 
-function normalizeMatches(apiMatches) {
+export function normalizeMatches(apiMatches) {
   return apiMatches.map(match => ({
     apiId: match.id,
     id: `api-${match.id}`,
     phase: determinatePhase(match.stage),
     group: match.group?.charAt(0) || null,
     homeTeam: {
-      name: match.homeTeam.name,
-      code: match.homeTeam.code,
-      flag: getFlagEmoji(match.homeTeam.code),
+      name: match.homeTeam?.name,
+      code: match.homeTeam?.code,
+      flag: getFlagEmoji(match.homeTeam?.code),
     },
     awayTeam: {
-      name: match.awayTeam.name,
-      code: match.awayTeam.code,
-      flag: getFlagEmoji(match.awayTeam.code),
+      name: match.awayTeam?.name,
+      code: match.awayTeam?.code,
+      flag: getFlagEmoji(match.awayTeam?.code),
     },
     kickoff: match.utcDate,
     venue: match.venue || 'TBD',
@@ -164,7 +158,7 @@ function determinatePhase(stage) {
 }
 
 function mapStatus(apiStatus) {
-  const status = apiStatus.toUpperCase()
+  const status = String(apiStatus || '').toUpperCase()
   if (status === 'FINISHED') return 'finished'
   if (status === 'LIVE' || status === 'IN_PLAY' || status === 'PAUSED') return 'live'
   return 'upcoming'
@@ -172,26 +166,46 @@ function mapStatus(apiStatus) {
 
 function extractScore(match) {
   const scoreCandidates = [
+    match.score?.current,
+    match.score?.live,
     match.score?.fullTime,
     match.score?.regularTime,
     match.score?.halfTime,
   ]
-  const score = scoreCandidates.find(candidate => hasScore(candidate))
-  if (score) return { home: score.home, away: score.away }
+  const score = scoreCandidates.map(normalizeScore).find(Boolean)
+  if (score) return score
 
-  const lastGoal = [...(match.goals || [])].reverse().find(goal => hasScore(goal.score))
-  if (lastGoal?.score) {
-    return {
-      home: lastGoal.score.home,
-      away: lastGoal.score.away,
-    }
-  }
+  const goalScore = inferScoreFromGoals(match.goals, match.homeTeam, match.awayTeam)
+  if (goalScore) return goalScore
 
   return null
 }
 
-function hasScore(score) {
-  return Number.isFinite(score?.home) && Number.isFinite(score?.away)
+function normalizeScore(score) {
+  const home = toScoreNumber(score?.home ?? score?.homeTeam)
+  const away = toScoreNumber(score?.away ?? score?.awayTeam)
+  if (home === null || away === null) return null
+  return { home, away }
+}
+
+function toScoreNumber(value) {
+  if (typeof value === 'number' && Number.isFinite(value)) return value
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value)
+    if (Number.isFinite(parsed)) return parsed
+  }
+  return null
+}
+
+function inferScoreFromGoals(goals = [], homeTeam, awayTeam) {
+  if (!Array.isArray(goals) || goals.length === 0) return null
+
+  return goals.reduce((score, goal) => {
+    const goalTeam = goal.team || {}
+    if (sameTeam(homeTeam, goalTeam)) return { ...score, home: score.home + 1 }
+    if (sameTeam(awayTeam, goalTeam)) return { ...score, away: score.away + 1 }
+    return score
+  }, { home: 0, away: 0 })
 }
 
 function sameResult(a, b) {
@@ -237,12 +251,25 @@ function findApiMatch(localMatch, apiMatches) {
 }
 
 function getFlagEmoji(countryCode) {
+  if (!countryCode || String(countryCode).length !== 2) return '🏳️'
+
   const codePoints = countryCode
     .toUpperCase()
     .split('')
     .map(char => 127397 + char.charCodeAt())
 
   return String.fromCodePoint(...codePoints)
+}
+
+async function readErrorDetail(response) {
+  try {
+    const text = await response.text()
+    if (!text) return ''
+    const parsed = JSON.parse(text)
+    return parsed.message || parsed.error || text.slice(0, 240)
+  } catch {
+    return ''
+  }
 }
 
 // ─── Cache management ────────────────────────────────────────────────────
