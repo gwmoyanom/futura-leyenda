@@ -23,6 +23,7 @@ create table if not exists public.matches (
   venue text,
   result jsonb,
   status text not null default 'upcoming' check (status in ('upcoming', 'live', 'finished')),
+  insight_links jsonb not null default '[]'::jsonb,
   api_source text,
   api_match_id text,
   last_synced_at timestamptz,
@@ -35,6 +36,7 @@ alter table public.matches add column if not exists api_match_id text;
 alter table public.matches add column if not exists last_synced_at timestamptz;
 alter table public.matches add column if not exists result_updated_at timestamptz;
 alter table public.matches add column if not exists updated_at timestamptz not null default now();
+alter table public.matches add column if not exists insight_links jsonb not null default '[]'::jsonb;
 
 create table if not exists public.predictions (
   id text primary key,

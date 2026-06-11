@@ -10,7 +10,7 @@
  * 6. Messages for Maximiliano
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import useStore from '@/store/index.js'
 import MatchCard from '@/components/participant/MatchCard.jsx'
@@ -18,6 +18,140 @@ import BirthCountdown from '@/components/participant/BirthCountdown.jsx'
 import Button from '@/components/ui/Button.jsx'
 import { Spinner } from '@/components/ui/index.jsx'
 import { groupMatchesByDate, formatDateLabel, formatKickoffTimeUtc05 } from '@/utils/date.utils.js'
+import {
+  buildFallbackInsightLinks,
+  fetchGoogleInsightLinks,
+  mergeInsightLinks,
+} from '@/services/match-insights.service.js'
+
+// ─── Live match spotlight ─────────────────────────────────────────────────────
+
+function LiveMatchSpotlight({ matches = [] }) {
+  const liveMatches = useMemo(
+    () => matches.filter(match => match.status === 'live'),
+    [matches]
+  )
+  const featuredMatch = liveMatches[0]
+  const fallbackLinks = useMemo(
+    () => featuredMatch ? buildFallbackInsightLinks(featuredMatch) : [],
+    [featuredMatch]
+  )
+  const [googleLinks, setGoogleLinks] = useState([])
+
+  useEffect(() => {
+    let cancelled = false
+    setGoogleLinks([])
+
+    if (!featuredMatch) return () => {
+      cancelled = true
+    }
+
+    fetchGoogleInsightLinks(featuredMatch).then(links => {
+      if (!cancelled) setGoogleLinks(links)
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [featuredMatch])
+
+  if (!featuredMatch) return null
+
+  const links = mergeInsightLinks(fallbackLinks, googleLinks).slice(0, 5)
+  const result = featuredMatch.result
+  const homeScore = result?.home ?? '–'
+  const awayScore = result?.away ?? '–'
+
+  return (
+    <section className="mb-8 overflow-hidden rounded-2xl border border-live/20 bg-navy text-white shadow-navy">
+      <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
+        <div className="relative overflow-hidden bg-live px-5 py-6 sm:px-7">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(255,255,255,0.22),transparent_34%)]" />
+          <div className="relative z-10">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-xs font-bold uppercase tracking-[0.22em]">
+              <span className="h-2 w-2 rounded-full bg-white animate-pulse-slow" />
+              En vivo ahora
+            </div>
+
+            <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+              <div className="min-w-0">
+                <div className="text-4xl leading-none">{featuredMatch.homeTeam.flag}</div>
+                <div className="mt-2 truncate font-display text-2xl font-bold tracking-wide">
+                  {featuredMatch.homeTeam.code}
+                </div>
+                <div className="truncate text-xs text-white/70">{featuredMatch.homeTeam.name}</div>
+              </div>
+
+              <div className="text-center">
+                <div className="font-display text-5xl font-bold leading-none">
+                  {homeScore}<span className="mx-2 text-white/45">-</span>{awayScore}
+                </div>
+                <div className="mt-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/70">
+                  {formatKickoffTimeUtc05(featuredMatch.kickoff)} UTC-05
+                </div>
+              </div>
+
+              <div className="min-w-0 text-right">
+                <div className="text-4xl leading-none">{featuredMatch.awayTeam.flag}</div>
+                <div className="mt-2 truncate font-display text-2xl font-bold tracking-wide">
+                  {featuredMatch.awayTeam.code}
+                </div>
+                <div className="truncate text-xs text-white/70">{featuredMatch.awayTeam.name}</div>
+              </div>
+            </div>
+
+            <p className="mt-5 truncate text-sm text-white/75">
+              {featuredMatch.venue}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-white px-5 py-5 text-navy sm:px-6">
+          <div className="mb-4 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <p className="font-body text-live text-xs tracking-[0.3em] uppercase mb-1">
+                Insights
+              </p>
+              <h2 className="font-display text-2xl font-bold tracking-wide">
+                SIGUE EL PARTIDO
+              </h2>
+            </div>
+            {liveMatches.length > 1 && (
+              <span className="text-xs font-medium text-gray-400">
+                +{liveMatches.length - 1} en vivo
+              </span>
+            )}
+          </div>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            {links.map(link => (
+              <a
+                key={link.id}
+                href={link.url}
+                target="_blank"
+                rel="noreferrer"
+                className="group rounded-xl border border-gray-100 bg-surface-soft p-3 transition-all hover:border-live/40 hover:bg-live/5"
+              >
+                <div className="mb-1 flex items-center justify-between gap-2">
+                  <span className="truncate text-[11px] font-bold uppercase tracking-wide text-live">
+                    {link.source}
+                  </span>
+                  <span className="text-gray-300 transition-transform group-hover:translate-x-0.5">↗</span>
+                </div>
+                <div className="line-clamp-2 text-sm font-semibold text-navy">
+                  {link.title}
+                </div>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-gray-500">
+                  {link.description}
+                </p>
+              </a>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
 
 // ─── Hero ─────────────────────────────────────────────────────────────────────
 
@@ -432,6 +566,7 @@ export default function LandingPage() {
 
   return (
     <div className="animate-fade-in">
+      <LiveMatchSpotlight matches={matches} />
       <Hero currentUser={currentUser} />
       <BabyProfile />
       <HowItWorks />

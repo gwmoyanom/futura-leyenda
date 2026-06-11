@@ -53,6 +53,8 @@ jobs:
           VITE_BASE_PATH: /futura-leyenda/
           VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_SEARCH_API_KEY: ${{ vars.VITE_GOOGLE_SEARCH_API_KEY }}
+          VITE_GOOGLE_SEARCH_CX: ${{ vars.VITE_GOOGLE_SEARCH_CX }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
