@@ -9,6 +9,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import useStore from '@/store/index.js'
 import Button from '@/components/ui/Button.jsx'
+import Avatar from '@/components/ui/Avatar.jsx'
 
 function formatMessageDate(value) {
   if (!value) return ''
@@ -32,7 +33,13 @@ function MessageCard({ message, index }) {
     >
       <div className="flex items-center gap-3 mb-3">
         <div className="w-10 h-10 rounded-full bg-navy flex items-center justify-center text-lg flex-shrink-0">
-          {message.avatar || '💌'}
+          <Avatar
+            avatar={message.avatar}
+            label={message.author}
+            className="text-lg leading-none"
+            imageClassName="h-10 w-10"
+            fallback="💌"
+          />
         </div>
         <div className="min-w-0">
           <p className="font-semibold text-navy text-sm truncate">{message.author}</p>
@@ -79,7 +86,12 @@ function AddMessageForm({ currentUser, existingMessage, onSave }) {
     <div className="bg-surface-soft rounded-xl2 border border-gold/15 p-5 sm:p-6 shadow-card">
       <div className="flex items-center gap-3 mb-4">
         <div className="w-10 h-10 rounded-full bg-navy flex items-center justify-center text-lg">
-          {currentUser.avatar}
+          <Avatar
+            avatar={currentUser.avatar}
+            label={currentUser.displayName}
+            className="text-lg leading-none"
+            imageClassName="h-10 w-10"
+          />
         </div>
         <div>
           <p className="font-medium text-navy text-sm">

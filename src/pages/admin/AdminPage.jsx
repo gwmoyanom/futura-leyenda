@@ -11,6 +11,7 @@ import useStore from '@/store/index.js'
 import MatchCard from '@/components/participant/MatchCard.jsx'
 import Button from '@/components/ui/Button.jsx'
 import { Spinner, Badge, Alert } from '@/components/ui/index.jsx'
+import Avatar from '@/components/ui/Avatar.jsx'
 import { groupMatchesByDate, formatDateLabel } from '@/utils/date.utils.js'
 import { MATCH_SYNC_INTERVAL_MS } from '@/services/matches-api.service.js'
 import clsx from 'clsx'
@@ -206,7 +207,12 @@ function UserRow({ user, currentUserId, busy, onApprove, onToggleBan, onDelete }
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="py-3.5 pl-5 pr-4">
         <div className="flex items-center gap-3">
-          <span className="text-xl">{user.avatar}</span>
+          <Avatar
+            avatar={user.avatar}
+            label={user.displayName}
+            className="text-xl"
+            imageClassName="h-7 w-7"
+          />
           <div>
             <div className="font-medium text-sm text-navy">{user.displayName}</div>
             <div className="text-xs text-gray-400">@{user.username}</div>

@@ -6,6 +6,7 @@ import { useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import useStore from '@/store/index.js'
 import { Card, CardHeader, CardBody, Spinner } from '@/components/ui/index.jsx'
+import Avatar from '@/components/ui/Avatar.jsx'
 import { BadgePill, BadgeShowcase, getEarnedBadges } from '@/utils/badges.utils.jsx'
 import Button from '@/components/ui/Button.jsx'
 import clsx from 'clsx'
@@ -90,9 +91,16 @@ export default function DashboardPage() {
       <div className="mb-8">
         <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-1">Mi rendimiento</p>
         <h1 className="font-display text-3xl font-bold text-navy tracking-wide">MI MARCADOR</h1>
-        <p className="text-gray-400 text-sm mt-1">
-          Hola, {currentUser?.displayName} {currentUser?.avatar} — así vas en la Futura Leyenda
-        </p>
+        <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-gray-400">
+          <span>Hola, {currentUser?.displayName}</span>
+          <Avatar
+            avatar={currentUser?.avatar}
+            label={currentUser?.displayName}
+            className="text-base"
+            imageClassName="h-5 w-5"
+          />
+          <span>— así vas en la Futura Leyenda</span>
+        </div>
       </div>
 
       {/* Stats */}

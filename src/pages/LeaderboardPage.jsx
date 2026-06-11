@@ -8,6 +8,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import useStore from '@/store/index.js'
 import { Spinner, EmptyState } from '@/components/ui/index.jsx'
+import Avatar from '@/components/ui/Avatar.jsx'
 import { calculateGroupStandings, getGroups } from '@/utils/tournamentSimulator.utils.js'
 import clsx from 'clsx'
 
@@ -42,7 +43,12 @@ function LeaderboardRow({ entry, rank, isCurrentUser, onOpen }) {
       </td>
       <td className="py-4 pr-4">
         <div className="flex items-center gap-3">
-          <span className="text-xl">{user.avatar}</span>
+          <Avatar
+            avatar={user.avatar}
+            label={user.displayName}
+            className="text-xl"
+            imageClassName="h-7 w-7"
+          />
           <div>
             <div className={clsx(
               'font-medium text-sm',
@@ -143,9 +149,17 @@ function PlayerPredictionsDrawer({ entry, matches, predictions, onClose }) {
               <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-1">
                 Predicción parcial
               </p>
-              <h2 className="font-display text-2xl font-bold text-navy tracking-wide">
-                {entry.user.avatar} {entry.user.displayName}
-              </h2>
+              <div className="flex items-center gap-2">
+                <Avatar
+                  avatar={entry.user.avatar}
+                  label={entry.user.displayName}
+                  className="text-2xl"
+                  imageClassName="h-8 w-8"
+                />
+                <h2 className="font-display text-2xl font-bold text-navy tracking-wide truncate">
+                  {entry.user.displayName}
+                </h2>
+              </div>
               <p className="mt-1 text-sm text-gray-500">
                 Tabla proyectada por grupos: posición, equipo y puntos.
               </p>

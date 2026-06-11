@@ -6,8 +6,24 @@ import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import useStore from '@/store/index.js'
+import Avatar from '@/components/ui/Avatar.jsx'
 
-const AVATAR_OPTIONS = ['⚽', '🏆', '🎯', '⭐', '🌟', '🔥', '🥅', '🧤', '💛', '👶', '🎉', '🚀', '🇪🇨', '🇦🇷', '🇧🇷', '🇲🇽']
+const EMOJI_AVATARS = ['⚽', '🏆', '🎯', '⭐', '🌟', '🔥', '🥅', '🧤', '💛', '👶', '🎉', '🚀', '🇪🇨', '🇦🇷', '🇧🇷', '🇲🇽']
+const IMAGE_AVATARS = [
+  { value: '/avatars/exito.png', label: 'Éxito' },
+  { value: '/avatars/simba.jpg', label: 'Simba' },
+  { value: '/avatars/simba2.jpg', label: 'Simba 2' },
+  { value: '/avatars/lionjpg.jpg', label: 'León' },
+  { value: '/avatars/calamardoguapo.jpg', label: 'Calamardo' },
+  { value: '/avatars/crycat.png', label: 'Cry cat' },
+  { value: '/avatars/doomnoop.png', label: 'Doom Noop' },
+  { value: '/avatars/esponja.png', label: 'Esponja' },
+  { value: '/avatars/joker.jpg', label: 'Joker' },
+  { value: '/avatars/patricio.jpg', label: 'Patricio' },
+  { value: '/avatars/peposad.jpg', label: 'Pepo sad' },
+  { value: '/avatars/pika.png', label: 'Pika' },
+  { value: '/avatars/trollface.png', label: 'Meme face' },
+]
 
 function TickerStrip({ matches = [], messages = [] }) {
   const liveOrRecent = matches.filter(m => m.status === 'live' || m.status === 'finished')
@@ -121,7 +137,12 @@ function UserMenu({ currentUser, onLogout, onUpdateUser }) {
         className="flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-2.5 py-2 text-sm text-white/70 transition-colors hover:bg-white/10 hover:text-white"
         aria-expanded={open}
       >
-        <span className="text-lg leading-none">{currentUser.avatar || '⚽'}</span>
+        <Avatar
+          avatar={currentUser.avatar}
+          label={currentUser.displayName}
+          className="text-lg leading-none"
+          imageClassName="h-6 w-6"
+        />
         <span className="hidden max-w-28 truncate font-medium sm:inline">{currentUser.displayName}</span>
         <span className="text-white/35">▾</span>
       </button>
@@ -138,7 +159,7 @@ function UserMenu({ currentUser, onLogout, onUpdateUser }) {
               Avatar
             </p>
             <div className="grid grid-cols-8 gap-2">
-              {AVATAR_OPTIONS.map(avatar => (
+              {EMOJI_AVATARS.map(avatar => (
                 <button
                   key={avatar}
                   type="button"
@@ -154,6 +175,38 @@ function UserMenu({ currentUser, onLogout, onUpdateUser }) {
                   aria-label={`Usar avatar ${avatar}`}
                 >
                   {avatar}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
+              Imágenes
+            </p>
+            <div className="grid grid-cols-4 gap-2">
+              {IMAGE_AVATARS.map(avatar => (
+                <button
+                  key={avatar.value}
+                  type="button"
+                  onClick={() => handleAvatarSelect(avatar.value)}
+                  disabled={saving}
+                  className={clsx(
+                    'flex h-12 w-12 items-center justify-center overflow-hidden rounded-lg border bg-white transition-colors',
+                    avatar.value === currentUser.avatar
+                      ? 'border-gold shadow-gold-sm'
+                      : 'border-gray-200 hover:border-gold',
+                    saving && 'cursor-wait opacity-70'
+                  )}
+                  aria-label={`Usar avatar ${avatar.label}`}
+                  title={avatar.label}
+                >
+                  <Avatar
+                    avatar={avatar.value}
+                    label={avatar.label}
+                    className="text-lg leading-none"
+                    imageClassName="h-full w-full rounded-lg"
+                  />
                 </button>
               ))}
             </div>
