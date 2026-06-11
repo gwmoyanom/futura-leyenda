@@ -16,6 +16,7 @@ Current selector files:
 - trollface.png
 
 To add another avatar, place the image here and add its `/avatars/file-name.ext`
-path to `IMAGE_AVATARS` in `src/components/layout/AppShell.jsx`.
+path to `IMAGE_AVATARS` in `src/components/layout/AppShell.jsx`. The app will
+prefix the correct GitHub Pages base path at render time.
 
 Recommended size: square PNG/WebP/JPG, 128x128 or 256x256.

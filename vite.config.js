@@ -2,9 +2,8 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import path from 'path'
 
-// Base path matches your GitHub repository name.
-// Change 'polla-mundialista' to your actual repo name when deploying.
-const BASE_PATH = process.env.VITE_BASE_PATH || '/polla-mundialista/'
+// Base path matches the GitHub Pages repository path.
+const BASE_PATH = process.env.VITE_BASE_PATH || '/futura-leyenda/'
 
 export default defineConfig({
   plugins: [react()],

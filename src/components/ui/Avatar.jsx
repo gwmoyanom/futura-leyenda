@@ -5,6 +5,16 @@ export function isImageAvatar(avatar) {
   return typeof avatar === 'string' && avatar.startsWith('/avatars/')
 }
 
+export function getAvatarImageSrc(avatar) {
+  if (!isImageAvatar(avatar)) return avatar
+
+  const base = import.meta.env.BASE_URL || '/'
+  const normalizedBase = base.endsWith('/') ? base : `${base}/`
+  const normalizedPath = avatar.replace(/^\/+/, '')
+
+  return `${normalizedBase}${normalizedPath}`
+}
+
 export default function Avatar({
   avatar,
   label = 'Avatar',
@@ -21,7 +31,7 @@ export default function Avatar({
   if (isImageAvatar(avatar) && !failed) {
     return (
       <img
-        src={avatar}
+        src={getAvatarImageSrc(avatar)}
         alt={label}
         onError={() => setFailed(true)}
         className={clsx('rounded-full object-cover', imageClassName || 'h-6 w-6')}
