@@ -454,10 +454,33 @@ function getBracketKey(userId) {
 
 function emptyBracketResults(userId) {
   return {
+    schemaVersion: 1,
     userId,
+    source: 'simulated_group_standings',
+    status: 'draft',
     picks: {},
     champion: null,
+    snapshot: null,
+    scoring: {
+      status: 'pending',
+      points: 0,
+      details: [],
+    },
+    submittedAt: null,
     updatedAt: null,
+  }
+}
+
+function normalizeBracketResults(userId, value) {
+  return {
+    ...emptyBracketResults(userId),
+    ...(value || {}),
+    userId,
+    picks: value?.picks || {},
+    scoring: {
+      ...emptyBracketResults(userId).scoring,
+      ...(value?.scoring || {}),
+    },
   }
 }
 
@@ -468,22 +491,34 @@ export async function getBracketResults(userId) {
     const rows = await supabaseRequest(
       `app_config?key=eq.${encodeURIComponent(getBracketKey(userId))}&select=value`
     )
-    return rows[0]?.value ?? emptyBracketResults(userId)
+    return normalizeBracketResults(userId, rows[0]?.value)
   }
 
   const base = await fetchJson('bracket-results.json')
   const local = readLocal('bracket_results') || {}
-  return local[userId] ?? base[userId] ?? emptyBracketResults(userId)
+  return normalizeBracketResults(userId, local[userId] ?? base[userId])
 }
 
 export async function saveBracketResults(userId, results) {
   if (!userId) return null
 
+  const now = new Date().toISOString()
+  const current = await getBracketResults(userId)
   const record = {
     ...emptyBracketResults(userId),
+    ...current,
     ...results,
+    schemaVersion: 1,
     userId,
-    updatedAt: new Date().toISOString(),
+    source: 'simulated_group_standings',
+    status: results?.status || current?.status || 'draft',
+    scoring: {
+      ...emptyBracketResults(userId).scoring,
+      ...(current?.scoring || {}),
+      ...(results?.scoring || {}),
+    },
+    submittedAt: current?.submittedAt || now,
+    updatedAt: now,
   }
 
   if (hasSupabase) {

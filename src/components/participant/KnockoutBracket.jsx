@@ -92,6 +92,21 @@ function getRoundIndex(matchId) {
   return ROUND_BY_PREFIX[matchId.split('-')[0]] ?? 0
 }
 
+function getRoundName(matchId) {
+  return matchId.split('-')[0]
+}
+
+function teamSnapshot(team) {
+  if (!team) return null
+  return {
+    code: team.code,
+    name: team.name,
+    flag: team.flag,
+    group: team.group,
+    groupPosition: team.groupPosition,
+  }
+}
+
 function buildBracketFromPicks(qualified, picks) {
   const r32 = pairSeeds(qualified)
   const r16 = makeNextRound(r32, 'r16', picks)
@@ -109,6 +124,30 @@ function buildBracketFromPicks(qualified, picks) {
   }
 
   return { r32, r16, qf, sf, finalMatch, thirdPlaceMatch }
+}
+
+function matchSnapshot(match, picks) {
+  return {
+    id: match.id,
+    round: getRoundName(match.id),
+    home: teamSnapshot(match.home),
+    away: teamSnapshot(match.away),
+    winner: teamSnapshot(getWinner(match, picks)),
+    loser: teamSnapshot(getLoser(match, picks)),
+  }
+}
+
+function buildBracketSnapshot(bracket, picks) {
+  return {
+    rounds: {
+      r32: bracket.r32.map(match => matchSnapshot(match, picks)),
+      r16: bracket.r16.map(match => matchSnapshot(match, picks)),
+      qf: bracket.qf.map(match => matchSnapshot(match, picks)),
+      sf: bracket.sf.map(match => matchSnapshot(match, picks)),
+      final: [matchSnapshot(bracket.finalMatch, picks)],
+      third: [matchSnapshot(bracket.thirdPlaceMatch, picks)],
+    },
+  }
 }
 
 function pruneAndSetPick(current, match, team) {
@@ -156,8 +195,8 @@ function TeamButton({ team, enabled, selected, faded, onClick }) {
   )
 }
 
-function MatchBox({ match, picks, onPick }) {
-  const enabled = Boolean(match.home && match.away)
+function MatchBox({ match, picks, onPick, disabled = false }) {
+  const enabled = Boolean(match.home && match.away) && !disabled
   const selectedCode = picks[match.id]
 
   return (
@@ -205,7 +244,7 @@ function Label({ col, children }) {
   )
 }
 
-function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
+function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion, disabled }) {
   return (
     <div className="relative z-10 flex h-full flex-col items-center justify-center">
       <div className="mb-3 h-24 text-center">
@@ -224,12 +263,12 @@ function CenterPanel({ finalMatch, thirdPlaceMatch, picks, onPick, champion }) {
       <div className="rounded-3xl bg-gold/10 px-3 py-4">
         <div className="rounded-xl border border-gray-300 bg-white p-3 shadow-card">
           <h3 className="mb-3 text-center font-display text-lg font-bold text-navy">Final</h3>
-          <MatchBox match={finalMatch} picks={picks} onPick={onPick} />
+          <MatchBox match={finalMatch} picks={picks} onPick={onPick} disabled={disabled} />
         </div>
 
         <div className="mt-14 rounded-xl border border-gray-300 bg-white p-3 shadow-card">
           <h3 className="mb-3 text-center font-display text-base font-bold leading-5 text-navy">3er<br />Puesto</h3>
-          <MatchBox match={thirdPlaceMatch} picks={picks} onPick={onPick} />
+          <MatchBox match={thirdPlaceMatch} picks={picks} onPick={onPick} disabled={disabled} />
         </div>
       </div>
     </div>
@@ -282,10 +321,10 @@ function roundSlots(matches, col, rowSpan) {
   }))
 }
 
-function renderSlots(slots, picks, onPick) {
+function renderSlots(slots, picks, onPick, disabled) {
   return slots.map(slot => (
     <GridSlot key={slot.match.id} col={slot.col} row={slot.row} span={slot.span}>
-      <MatchBox match={slot.match} picks={picks} onPick={onPick} />
+      <MatchBox match={slot.match} picks={picks} onPick={onPick} disabled={disabled} />
     </GridSlot>
   ))
 }
@@ -306,7 +345,7 @@ function renderConnectors(fromSlots, toSlots, side, picks) {
   })
 }
 
-export default function KnockoutBracket({ matches, predictions, bracketResults, onSave }) {
+export default function KnockoutBracket({ matches, predictions, bracketResults, onSave, isLocked = false }) {
   const [picks, setPicks] = useState({})
   const [saving, setSaving] = useState(false)
   const [saveError, setSaveError] = useState('')
@@ -319,20 +358,29 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
   const bracket = useMemo(() => buildBracketFromPicks(qualified, picks), [qualified, picks])
 
   function handlePick(match, team) {
+    if (isLocked) return
     if (!team || !match.home || !match.away) return
     const next = pruneAndSetPick(picks, match, team)
     const nextBracket = buildBracketFromPicks(qualified, next)
     const nextChampion = getWinner(nextBracket.finalMatch, next)
+    const snapshot = buildBracketSnapshot(nextBracket, next)
 
     setPicks(next)
     setSaving(true)
     setSaveError('')
 
     Promise.resolve(onSave?.({
+      status: 'draft',
       picks: next,
       champion: nextChampion
         ? { code: nextChampion.code, name: nextChampion.name, flag: nextChampion.flag }
         : null,
+      snapshot,
+      scoring: {
+        status: 'pending',
+        points: 0,
+        details: [],
+      },
     })).catch(err => {
       setSaveError(err.message || 'No se pudo guardar la llave')
     }).finally(() => {
@@ -365,12 +413,14 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
     <div className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-gray-500">
-          La llave se llena con tus tablas simuladas. Elige cada ganador para avanzar hasta el campeón.
+          {isLocked
+            ? 'La llave está congelada porque el plazo de predicciones ya cerró.'
+            : 'La llave se llena con tus tablas simuladas. Elige cada ganador para avanzar hasta el campeón.'}
         </p>
         <div className="flex items-center gap-2">
           {saveError && <span className="text-xs font-semibold text-live">{saveError}</span>}
           <div className="rounded-lg bg-gray-100 px-3 py-2 text-xs font-semibold text-gray-600">
-            {saving ? 'Guardando...' : `${qualified.length}/32 equipos`}
+            {isLocked ? 'Llave congelada' : saving ? 'Guardando...' : `${qualified.length}/32 equipos`}
           </div>
         </div>
       </div>
@@ -410,10 +460,10 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
           <Label col={7}>{ROUND_LABELS[1]}</Label>
           <Label col={8}>{ROUND_LABELS[0]}</Label>
 
-          {renderSlots(slots.leftR32, picks, handlePick)}
-          {renderSlots(slots.leftR16, picks, handlePick)}
-          {renderSlots(slots.leftQf, picks, handlePick)}
-          {renderSlots(slots.leftSf, picks, handlePick)}
+          {renderSlots(slots.leftR32, picks, handlePick, isLocked)}
+          {renderSlots(slots.leftR16, picks, handlePick, isLocked)}
+          {renderSlots(slots.leftQf, picks, handlePick, isLocked)}
+          {renderSlots(slots.leftSf, picks, handlePick, isLocked)}
 
           <div className="z-10" style={{ gridColumn: 5, gridRow: '2 / span 8' }}>
             <CenterPanel
@@ -422,13 +472,14 @@ export default function KnockoutBracket({ matches, predictions, bracketResults, 
               picks={picks}
               onPick={handlePick}
               champion={champion}
+              disabled={isLocked}
             />
           </div>
 
-          {renderSlots(slots.rightSf, picks, handlePick)}
-          {renderSlots(slots.rightQf, picks, handlePick)}
-          {renderSlots(slots.rightR16, picks, handlePick)}
-          {renderSlots(slots.rightR32, picks, handlePick)}
+          {renderSlots(slots.rightSf, picks, handlePick, isLocked)}
+          {renderSlots(slots.rightQf, picks, handlePick, isLocked)}
+          {renderSlots(slots.rightR16, picks, handlePick, isLocked)}
+          {renderSlots(slots.rightR32, picks, handlePick, isLocked)}
         </div>
       </div>
     </div>

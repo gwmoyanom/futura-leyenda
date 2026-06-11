@@ -148,7 +148,126 @@ function PredictionScoreRow({ item, exactPoints, correctPoints }) {
   )
 }
 
-export default function PredictionScores({ breakdown = [], rules }) {
+function uniqueTeams(teams) {
+  const seen = new Set()
+  return teams.filter(team => {
+    if (!team?.code || seen.has(team.code)) return false
+    seen.add(team.code)
+    return true
+  })
+}
+
+function teamsFromRound(snapshot, round) {
+  return uniqueTeams(
+    (snapshot?.rounds?.[round] || []).flatMap(match => [match.home, match.away])
+  )
+}
+
+function formatTeams(teams, emptyText = 'Pendiente') {
+  if (!teams.length) return emptyText
+  return teams.map(team => `${team.flag || ''} ${team.code}`).join(' · ')
+}
+
+function BracketScorePreview({ bracketResults, rules, isLocked }) {
+  const picksCount = Object.keys(bracketResults?.picks || {}).length
+  const hasBracket = picksCount > 0
+  const snapshot = bracketResults?.snapshot
+  const finalTeams = teamsFromRound(snapshot, 'final')
+  const semifinalists = teamsFromRound(snapshot, 'sf')
+  const quarterfinalists = teamsFromRound(snapshot, 'qf')
+  const champion = bracketResults?.champion
+  const statusLabel = isLocked
+    ? 'Congelada y pendiente de resultados oficiales'
+    : 'Editable hasta el cierre de predicciones'
+
+  const preparedRules = [
+    {
+      label: 'Campeón',
+      points: rules?.champion?.points ?? 10,
+      prediction: champion ? `${champion.flag || ''} ${champion.code}` : 'Pendiente',
+    },
+    {
+      label: 'Finalistas',
+      points: `${rules?.finalist?.points ?? 4} c/u`,
+      prediction: formatTeams(finalTeams),
+    },
+    {
+      label: 'Semifinalistas',
+      points: `${rules?.semiFinalist?.points ?? 2} c/u`,
+      prediction: formatTeams(semifinalists),
+    },
+    {
+      label: 'Cuartofinalistas',
+      points: `${rules?.quarterFinalist?.points ?? 1} c/u`,
+      prediction: formatTeams(quarterfinalists),
+    },
+  ]
+
+  return (
+    <section className="rounded-card border border-gold/15 bg-white p-4 shadow-card">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div>
+          <p className="font-body text-gold text-xs tracking-[0.3em] uppercase mb-1">
+            Llave final
+          </p>
+          <h3 className="font-display text-xl font-bold text-navy tracking-wide">
+            PUNTUACIÓN DE LLAVE
+          </h3>
+          <p className="mt-1 text-sm text-gray-500">
+            Esta sección queda preparada para puntuar cuando existan cruces y resultados oficiales de eliminación directa.
+          </p>
+        </div>
+        <span className={clsx(
+          'w-fit rounded-full border px-3 py-1 text-xs font-semibold',
+          isLocked ? 'border-gold/30 bg-gold/10 text-gold-dark' : 'border-gray-200 bg-gray-50 text-gray-500'
+        )}>
+          {statusLabel}
+        </span>
+      </div>
+
+      {!hasBracket ? (
+        <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4 text-sm text-gray-500">
+          Todavía no hay una llave guardada. Completa la pestaña <span className="font-semibold text-navy">Llave</span> para dejar esta predicción lista.
+        </div>
+      ) : (
+        <>
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {preparedRules.map(rule => (
+              <div key={rule.label} className="rounded-lg border border-gray-100 bg-surface-soft p-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-sm font-semibold text-navy">{rule.label}</span>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-xs font-bold text-gold-dark">
+                    {rule.points}
+                  </span>
+                </div>
+                <p className="mt-2 text-xs leading-relaxed text-gray-500">
+                  {rule.prediction}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-4 rounded-lg border border-gray-100 bg-gray-50 p-4">
+            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-500">
+              <span>{picksCount} selecciones guardadas</span>
+              {bracketResults?.submittedAt && (
+                <span>Predicción creada: {new Date(bracketResults.submittedAt).toLocaleDateString('es')}</span>
+              )}
+              {bracketResults?.updatedAt && (
+                <span>Última actualización: {new Date(bracketResults.updatedAt).toLocaleDateString('es')}</span>
+              )}
+            </div>
+            <p className="mt-2 text-xs leading-relaxed text-gray-500">
+              Estado de puntuación: <span className="font-semibold text-navy">Pendiente</span>. No suma puntos todavía.
+            </p>
+          </div>
+        </>
+      )}
+    </section>
+  )
+}
+
+export default function PredictionScores({ breakdown = [], rules, bracketResults, isLocked = false }) {
   const exactPoints = rules?.exactScore?.points ?? 3
   const correctPoints = rules?.correctResult?.points ?? 1
   const finished = breakdown.filter(item => item.result)
@@ -166,14 +285,19 @@ export default function PredictionScores({ breakdown = [], rules }) {
 
   if (breakdown.length === 0) {
     return (
-      <div className="text-center py-14 rounded-card border border-gray-100 bg-white text-gray-400 shadow-card">
-        <p className="text-sm">Aún no tienes predicciones guardadas para puntuar.</p>
+      <div className="space-y-6">
+        <BracketScorePreview bracketResults={bracketResults} rules={rules} isLocked={isLocked} />
+        <div className="text-center py-14 rounded-card border border-gray-100 bg-white text-gray-400 shadow-card">
+          <p className="text-sm">Aún no tienes predicciones de partidos guardadas para puntuar.</p>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
+      <BracketScorePreview bracketResults={bracketResults} rules={rules} isLocked={isLocked} />
+
       <div className="grid grid-cols-2 lg:grid-cols-5 gap-3">
         <StatBox label="Puntos totales" value={total} tone="gold" />
         <StatBox label="Marcadores exactos" value={exact.length} />

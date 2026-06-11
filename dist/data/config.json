@@ -23,7 +23,9 @@
     "correctResult": { "points": 1, "description": "Resultado correcto (victoria/empate) sin marcador exacto" },
     "goldenBoot":    { "points": 5, "description": "Acertar al goleador del torneo" },
     "champion":      { "points": 10, "description": "Acertar al campeón del Mundial" },
-    "finalist":      { "points": 4,  "description": "Acertar a un finalista" }
+    "finalist":      { "points": 4,  "description": "Acertar a un finalista" },
+    "semiFinalist":  { "points": 2,  "description": "Acertar a un semifinalista" },
+    "quarterFinalist": { "points": 1, "description": "Acertar a un cuartofinalista" }
   },
   "prizes": [
     { "position": 1, "label": "Campeón 🥇",    "description": "Premio principal — revelado en la baby shower" },

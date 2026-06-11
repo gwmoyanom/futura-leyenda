@@ -157,6 +157,7 @@ export default function PredictionsPage() {
             predictions={myPredictions}
             bracketResults={myBracketResults}
             onSave={saveBracketResults}
+            isLocked={isLocked}
           />
         </div>
       )}
@@ -165,7 +166,12 @@ export default function PredictionsPage() {
       {showView === 'scores' && (
         <div>
           <h2 className="font-display text-2xl font-bold text-navy mb-8">Puntuaciones</h2>
-          <PredictionScores breakdown={breakdown} rules={config?.rules} />
+          <PredictionScores
+            breakdown={breakdown}
+            rules={config?.rules}
+            bracketResults={myBracketResults}
+            isLocked={isLocked}
+          />
         </div>
       )}
     </div>
