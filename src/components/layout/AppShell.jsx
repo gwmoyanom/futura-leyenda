@@ -7,32 +7,65 @@ import { Link, useNavigate, useLocation } from 'react-router-dom'
 import clsx from 'clsx'
 import useStore from '@/store/index.js'
 
-function TickerStrip({ matches }) {
+function TickerStrip({ matches = [], messages = [] }) {
   const liveOrRecent = matches.filter(m => m.status === 'live' || m.status === 'finished')
-  if (liveOrRecent.length === 0) return null
-  const items = [...liveOrRecent, ...liveOrRecent]
+  const messageItems = messages.slice(0, 8)
+  if (liveOrRecent.length === 0 && messageItems.length === 0) return null
+
+  const items = [
+    ...liveOrRecent.map(match => ({ type: 'match', match })),
+    ...messageItems.map(message => ({ type: 'message', message })),
+  ]
+  const tickerItems = [...items, ...items]
+  const hasLive = liveOrRecent.some(match => match.status === 'live')
+
   return (
     <div className="bg-navy-800 border-b border-gold/10 overflow-hidden h-9 flex items-center">
-      <div className="flex-shrink-0 px-3 bg-live text-white text-xs font-bold h-full flex items-center gap-1.5">
-        <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse-slow" />
-        EN VIVO
+      <div className={clsx(
+        'flex-shrink-0 px-3 text-white text-xs font-bold h-full flex items-center gap-1.5',
+        hasLive ? 'bg-live' : 'bg-gold text-navy'
+      )}>
+        <span className={clsx(
+          'w-1.5 h-1.5 rounded-full',
+          hasLive ? 'bg-white animate-pulse-slow' : 'bg-navy'
+        )} />
+        {hasLive ? 'EN VIVO' : 'MAXI'}
       </div>
       <div className="overflow-hidden flex-1">
         <div className="flex animate-ticker whitespace-nowrap">
-          {items.map((match, i) => (
-            <span key={i} className="inline-flex items-center gap-2 px-6 text-xs text-white/70">
-              <span>{match.homeTeam.flag} {match.homeTeam.code}</span>
-              {match.result ? (
-                <span className="font-display font-bold text-gold text-sm">
-                  {match.result.home} – {match.result.away}
+          {tickerItems.map((item, i) => {
+            if (item.type === 'message') {
+              const rawText = item.message.text || ''
+              const text = rawText.length > 96
+                ? `${rawText.slice(0, 96)}...`
+                : rawText
+
+              return (
+                <span key={`${item.message.id}-${i}`} className="inline-flex items-center gap-2 px-6 text-xs text-white/70">
+                  <span className="text-gold">Mensaje a Maxi</span>
+                  <span className="text-white/80">"{text}"</span>
+                  <span className="text-white/40">— {item.message.author}</span>
+                  <span className="text-white/10 mx-2">·</span>
                 </span>
-              ) : (
-                <span className="text-white/30">vs</span>
-              )}
-              <span>{match.awayTeam.code} {match.awayTeam.flag}</span>
-              <span className="text-white/10 mx-2">·</span>
-            </span>
-          ))}
+              )
+            }
+
+            const match = item.match
+            return (
+              <span key={`${match.id}-${i}`} className="inline-flex items-center gap-2 px-6 text-xs text-white/70">
+                <span>{match.homeTeam.flag} {match.homeTeam.code}</span>
+                {match.result ? (
+                  <span className="font-display font-bold text-gold text-sm">
+                    {match.result.home} – {match.result.away}
+                  </span>
+                ) : (
+                  <span className="text-white/30">vs</span>
+                )}
+                <span>{match.awayTeam.code} {match.awayTeam.flag}</span>
+                <span className="text-white/10 mx-2">·</span>
+              </span>
+            )
+          })}
         </div>
       </div>
     </div>
@@ -65,7 +98,7 @@ function Navbar({ currentUser, onLogout }) {
   const closeMobile = () => setMobileOpen(false)
 
   return (
-    <nav className="bg-navy border-b border-white/8 sticky top-0 z-50 shadow-navy">
+    <nav className="bg-navy border-b border-white/8 shadow-navy">
       <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between gap-4">
         <Link to="/" className="flex items-center gap-3 flex-shrink-0 group">
           <span className="text-2xl group-hover:animate-float transition-all">🏆</span>
@@ -160,7 +193,7 @@ function Footer() {
 }
 
 export default function AppShell({ children }) {
-  const { currentUser, logout, matches } = useStore()
+  const { currentUser, logout, matches, maxiMessages } = useStore()
   const navigate = useNavigate()
 
   function handleLogout() {
@@ -170,8 +203,10 @@ export default function AppShell({ children }) {
 
   return (
     <div className="min-h-screen bg-surface flex flex-col font-body">
-      <TickerStrip matches={matches} />
-      <Navbar currentUser={currentUser} onLogout={handleLogout} />
+      <header className="sticky top-0 z-50">
+        <TickerStrip matches={matches} messages={maxiMessages} />
+        <Navbar currentUser={currentUser} onLogout={handleLogout} />
+      </header>
       <main className="flex-1 max-w-6xl mx-auto w-full px-4 py-8">
         {children}
       </main>
