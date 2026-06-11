@@ -130,12 +130,17 @@ describe('buildLeaderboard', () => {
     expect(board[1].user.id).toBe('u2')
   })
 
-  it('uses exact scores as tiebreaker', () => {
+  it('uses prediction count before exact scores as tiebreaker', () => {
     const tiedPredictions = [
-      { userId: 'u1', matchId: 'm1', prediction: { home: 1, away: 0 } }, // correct → 1
-      { userId: 'u2', matchId: 'm1', prediction: { home: 2, away: 1 } }, // exact → 3
+      { userId: 'u1', matchId: 'm1', prediction: { home: 1, away: 0 } },
+      { userId: 'u1', matchId: 'm2', prediction: { home: 1, away: 1 } },
+      { userId: 'u2', matchId: 'm1', prediction: { home: 1, away: 0 } },
     ]
-    const board = buildLeaderboard(users, tiedPredictions, matches, rules)
-    expect(board[0].user.id).toBe('u2')
+    const tiedMatches = [
+      { id: 'm1', result: { home: 2, away: 1 }, status: 'finished' },
+      { id: 'm2', result: null, status: 'upcoming' },
+    ]
+    const board = buildLeaderboard(users, tiedPredictions, tiedMatches, rules)
+    expect(board[0].user.id).toBe('u1')
   })
 })

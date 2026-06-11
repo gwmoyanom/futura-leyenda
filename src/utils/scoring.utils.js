@@ -137,9 +137,10 @@ export function buildLeaderboard(users, predictions, matches, rules) {
     }
   })
 
-  // Sort: total points desc, then exact scores desc as tiebreaker
+  // Sort: total points desc, then prediction count, then exact scores.
   return entries.sort((a, b) => {
     if (b.totalPoints !== a.totalPoints) return b.totalPoints - a.totalPoints
+    if (b.predictionsCount !== a.predictionsCount) return b.predictionsCount - a.predictionsCount
     return b.exactScores - a.exactScores
   })
 }
