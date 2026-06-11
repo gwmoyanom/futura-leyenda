@@ -20,6 +20,9 @@ import WorldCupSimulator from '@/components/participant/WorldCupSimulator.jsx'
 
 export default function PredictionsPage() {
   const [showView, setShowView] = useState('simulator')
+  const [autoGenerating, setAutoGenerating] = useState(false)
+  const [autoMessage, setAutoMessage] = useState('')
+  const [autoError, setAutoError] = useState('')
   
   const {
     matches,
@@ -46,6 +49,44 @@ export default function PredictionsPage() {
   const lockCountdown = config?.tournament?.inaugurationDate 
     ? getPredictionsLockCountdown(config.tournament.inaugurationDate)
     : null
+
+  function randomGroupScore() {
+    return Math.floor(Math.random() * 3) + 1
+  }
+
+  async function handleAutoGenerateGroupPredictions() {
+    if (isLocked || autoGenerating) return
+
+    const groupMatches = matches.filter(match => match.phase === 'group')
+    if (groupMatches.length === 0) {
+      setAutoError('No hay partidos de fase de grupos para generar.')
+      return
+    }
+
+    const confirmed = window.confirm(
+      'Esto reemplazará tus predicciones de fase de grupos con marcadores aleatorios entre 1 y 3. ¿Continuar?'
+    )
+    if (!confirmed) return
+
+    setAutoGenerating(true)
+    setAutoMessage('')
+    setAutoError('')
+
+    try {
+      for (const match of groupMatches) {
+        await savePrediction(match.id, {
+          home: randomGroupScore(),
+          away: randomGroupScore(),
+        })
+      }
+      setAutoMessage(`Se generaron ${groupMatches.length} predicciones de fase de grupos.`)
+      setTimeout(() => setAutoMessage(''), 3500)
+    } catch (err) {
+      setAutoError(err.message || 'No se pudieron generar las predicciones automáticas.')
+    } finally {
+      setAutoGenerating(false)
+    }
+  }
 
   if (loading) {
     return <div className="flex justify-center py-20"><Spinner size="lg" /></div>
@@ -93,6 +134,33 @@ export default function PredictionsPage() {
           <div>
             <p className="font-semibold text-gold-dark">{lockCountdown}</p>
           </div>
+        </div>
+      )}
+
+      {!isLocked && (
+        <div className="bg-white border border-gold/15 rounded-xl p-4 mb-6 shadow-card">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div>
+              <p className="font-semibold text-navy text-sm">Generador automático</p>
+              <p className="text-xs text-gray-500 mt-1">
+                Rellena solo fase de grupos con marcadores aleatorios del 1 al 3.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={handleAutoGenerateGroupPredictions}
+              disabled={autoGenerating}
+              className="inline-flex items-center justify-center rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-navy shadow-gold-sm transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {autoGenerating ? 'Generando...' : 'Generar grupos'}
+            </button>
+          </div>
+          {autoMessage && (
+            <p className="mt-3 text-xs font-medium text-pitch-dark">{autoMessage}</p>
+          )}
+          {autoError && (
+            <p className="mt-3 text-xs font-medium text-live">{autoError}</p>
+          )}
         </div>
       )}
 
