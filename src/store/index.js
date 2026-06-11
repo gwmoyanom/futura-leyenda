@@ -10,6 +10,7 @@
 import { create } from 'zustand'
 import { getSession, clearSession, login as authLogin, register as authRegister } from '@/services/auth.service.js'
 import {
+  deleteUser as storageDeleteUser,
   getMatches,
   getMaxiMessages,
   getUsers,
@@ -76,6 +77,12 @@ const useStore = create((set, get) => ({
   reloadMatches: async () => {
     const matches = await getMatches()
     set({ matches })
+  },
+
+  /** Reload just users (after admin updates approval/status) */
+  reloadUsers: async () => {
+    const users = await getUsers()
+    set({ users })
   },
 
   /** Reload messages for Maximiliano */
@@ -249,8 +256,13 @@ const useStore = create((set, get) => ({
   /** Admin: approve or ban a user */
   adminUpdateUser: async (userId, updates) => {
     await storageUpdateUser(userId, updates)
-    const users = await getUsers()
-    set({ users })
+    await get().reloadUsers()
+  },
+
+  /** Admin: delete a participant */
+  adminDeleteUser: async (userId) => {
+    await storageDeleteUser(userId)
+    await get().reloadUsers()
   },
 }))
 

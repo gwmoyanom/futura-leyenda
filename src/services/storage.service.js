@@ -209,11 +209,14 @@ export async function getUsers() {
   const base = await fetchJson('users.json')
   const localUsers = readLocal('users_local') || []
   const overrides = readLocal('users_overrides') || {}
+  const deleted = new Set(readLocal('users_deleted') || [])
 
-  return [...base, ...localUsers].map(user => ({
-    ...user,
-    ...overrides[user.id],
-  }))
+  return [...base, ...localUsers]
+    .filter(user => !deleted.has(user.id))
+    .map(user => ({
+      ...user,
+      ...overrides[user.id],
+    }))
 }
 
 export async function registerUser(userData) {
@@ -254,6 +257,28 @@ export async function updateUser(userId, updates) {
   const overrides = readLocal('users_overrides') || {}
   overrides[userId] = { ...overrides[userId], ...updates }
   writeLocal('users_overrides', overrides)
+}
+
+export async function deleteUser(userId) {
+  if (hasSupabase) {
+    await supabaseRequest(`users?id=eq.${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      prefer: 'return=minimal',
+    })
+    return
+  }
+
+  const localUsers = readLocal('users_local') || []
+  const nextLocalUsers = localUsers.filter(user => user.id !== userId)
+  writeLocal('users_local', nextLocalUsers)
+
+  const overrides = readLocal('users_overrides') || {}
+  delete overrides[userId]
+  writeLocal('users_overrides', overrides)
+
+  const deleted = new Set(readLocal('users_deleted') || [])
+  deleted.add(userId)
+  writeLocal('users_deleted', Array.from(deleted))
 }
 
 // ─── Predictions ─────────────────────────────────────────────────────────────

@@ -95,7 +95,10 @@ function MatchesTab() {
 
 // ─── Users tab ────────────────────────────────────────────────────────────────
 
-function UserRow({ user, onApprove, onToggleBan }) {
+function UserRow({ user, currentUserId, busy, onApprove, onToggleBan, onDelete }) {
+  const isCurrentUser = user.id === currentUserId
+  const canManage = user.role !== 'admin' && !isCurrentUser
+
   return (
     <tr className="hover:bg-gray-50 transition-colors">
       <td className="py-3.5 pl-5 pr-4">
@@ -119,25 +122,43 @@ function UserRow({ user, onApprove, onToggleBan }) {
         {user.approved ? (
           <Badge variant="green">Activo</Badge>
         ) : (
-          <Badge variant="red">Pendiente</Badge>
+          <Badge variant="red">Pendiente / Inactivo</Badge>
         )}
       </td>
       <td className="py-3.5 pr-5">
-        {user.role !== 'admin' && (
-          <div className="flex gap-2">
+        {canManage ? (
+          <div className="flex flex-wrap gap-2">
             {!user.approved && (
-              <Button size="sm" variant="primary" onClick={() => onApprove(user.id)}>
+              <Button
+                size="sm"
+                variant="primary"
+                loading={busy}
+                onClick={() => onApprove(user.id)}
+              >
                 Aprobar
               </Button>
             )}
             <Button
               size="sm"
               variant={user.approved ? 'danger' : 'secondary'}
+              loading={busy}
               onClick={() => onToggleBan(user.id, user.approved)}
             >
               {user.approved ? 'Suspender' : 'Reactivar'}
             </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              disabled={busy}
+              onClick={() => onDelete(user)}
+            >
+              Eliminar
+            </Button>
           </div>
+        ) : (
+          <span className="text-xs text-gray-400">
+            {isCurrentUser ? 'Tu cuenta' : 'Protegido'}
+          </span>
         )}
       </td>
     </tr>
@@ -145,16 +166,60 @@ function UserRow({ user, onApprove, onToggleBan }) {
 }
 
 function UsersTab() {
-  const { users, adminUpdateUser } = useStore()
+  const { users, currentUser, adminUpdateUser, adminDeleteUser } = useStore()
+  const [busyUserId, setBusyUserId] = useState(null)
+  const [savedMessage, setSavedMessage] = useState('')
+  const [error, setError] = useState('')
+
+  async function runUserAction(userId, action, successMessage) {
+    setBusyUserId(userId)
+    setError('')
+    setSavedMessage('')
+
+    try {
+      await action()
+      setSavedMessage(successMessage)
+      setTimeout(() => setSavedMessage(''), 2500)
+    } catch (err) {
+      setError(err.message || 'No se pudo actualizar el usuario')
+    } finally {
+      setBusyUserId(null)
+    }
+  }
 
   function handleApprove(userId) {
-    adminUpdateUser(userId, { approved: true })
+    return runUserAction(
+      userId,
+      () => adminUpdateUser(userId, { approved: true }),
+      'Usuario aprobado'
+    )
   }
 
   function handleToggleBan(userId, currentlyApproved) {
-    adminUpdateUser(userId, { approved: !currentlyApproved })
+    return runUserAction(
+      userId,
+      () => adminUpdateUser(userId, { approved: !currentlyApproved }),
+      currentlyApproved ? 'Usuario suspendido' : 'Usuario reactivado'
+    )
   }
 
+  function handleDelete(user) {
+    const confirmed = window.confirm(`¿Eliminar definitivamente a ${user.displayName}?`)
+    if (!confirmed) return null
+
+    return runUserAction(
+      user.id,
+      () => adminDeleteUser(user.id),
+      'Usuario eliminado'
+    )
+  }
+
+  const sortedUsers = [...users].sort((a, b) => {
+    if (a.role === 'admin' && b.role !== 'admin') return -1
+    if (a.role !== 'admin' && b.role === 'admin') return 1
+    if (a.approved !== b.approved) return a.approved ? 1 : -1
+    return a.displayName.localeCompare(b.displayName)
+  })
   const pendingCount = users.filter(u => !u.approved && u.role !== 'admin').length
 
   return (
@@ -164,9 +229,20 @@ function UsersTab() {
           ⏳ Hay <strong>{pendingCount} cuenta(s)</strong> pendiente(s) de aprobación
         </Alert>
       )}
+      {savedMessage && (
+        <Alert variant="success" className="mb-4">
+          ✓ {savedMessage}
+        </Alert>
+      )}
+      {error && (
+        <Alert variant="error" className="mb-4">
+          {error}
+        </Alert>
+      )}
 
       <div className="bg-white rounded-card border border-gray-100 shadow-card overflow-hidden">
-        <table className="w-full">
+        <div className="overflow-x-auto">
+        <table className="w-full min-w-[720px]">
           <thead>
             <tr className="border-b border-gray-100 bg-gray-50/50">
               <th className="py-3 pl-5 pr-4 text-left text-xs text-gray-400 uppercase tracking-wider">Usuario</th>
@@ -177,17 +253,26 @@ function UsersTab() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {users.map(user => (
+            {sortedUsers.map(user => (
               <UserRow
                 key={user.id}
                 user={user}
+                currentUserId={currentUser?.id}
+                busy={busyUserId === user.id}
                 onApprove={handleApprove}
                 onToggleBan={handleToggleBan}
+                onDelete={handleDelete}
               />
             ))}
           </tbody>
         </table>
+        </div>
       </div>
+      {users.length === 0 && (
+        <div className="text-center py-10 text-sm text-gray-400">
+          No hay usuarios registrados todavía.
+        </div>
+      )}
     </div>
   )
 }

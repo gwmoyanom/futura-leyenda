@@ -79,6 +79,9 @@ create policy "public users insert" on public.users for insert with check (true)
 drop policy if exists "public users update" on public.users;
 create policy "public users update" on public.users for update using (true) with check (true);
 
+drop policy if exists "public users delete" on public.users;
+create policy "public users delete" on public.users for delete using (true);
+
 drop policy if exists "public matches read" on public.matches;
 create policy "public matches read" on public.matches for select using (true);
 
