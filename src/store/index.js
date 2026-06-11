@@ -24,6 +24,7 @@ import {
   updateUser as storageUpdateUser,
 } from '@/services/storage.service.js'
 import { buildLeaderboard, calculateUserScore } from '@/utils/scoring.utils.js'
+import { isMatchPredictionLocked } from '@/utils/date.utils.js'
 import { getMatchApiUpdates } from '@/services/matches-api.service.js'
 
 const useStore = create((set, get) => ({
@@ -142,13 +143,18 @@ const useStore = create((set, get) => ({
 
   /** Save a prediction for the current user */
   savePrediction: async (matchId, prediction) => {
-    const { currentUser, isPredictionLocked } = get()
+    const { currentUser, isPredictionLocked, matches } = get()
     if (!currentUser) return
 
     // Check if predictions are locked
     if (isPredictionLocked()) {
       console.warn('Predictions are locked after tournament inauguration')
       return null
+    }
+
+    const match = matches.find(item => item.id === matchId)
+    if (isMatchPredictionLocked(match)) {
+      throw new Error('Este partido ya está en vivo o finalizado. La predicción quedó bloqueada.')
     }
 
     const updated = await storageSavePrediction(currentUser.id, matchId, prediction)

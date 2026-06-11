@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import clsx from 'clsx'
 import Button from '@/components/ui/Button.jsx'
 import { Badge } from '@/components/ui/index.jsx'
-import { formatKickoff } from '@/utils/date.utils.js'
+import { formatKickoff, isMatchPredictionLocked } from '@/utils/date.utils.js'
 import {
   KNOCKOUT_PHASES,
   buildStandingsByGroup,
@@ -186,7 +186,7 @@ function GroupSimulator({ group, matches, standings, predictionMap, onScoreChang
             match={match}
             score={getPredictionScore(predictionMap, match.id)}
             onScoreChange={onScoreChange}
-            disabled={disabled}
+            disabled={disabled || isMatchPredictionLocked(match)}
           />
         ))}
       </div>
@@ -205,9 +205,10 @@ function KnockoutCard({ match, predictionMap, standingsByGroup, onScoreChange, d
     score?.home > score?.away ? homeTeam :
     score?.away > score?.home ? awayTeam :
     null
+  const isLocked = disabled || isMatchPredictionLocked(match)
 
   async function chooseWinner(side) {
-    if (disabled) return
+    if (isLocked) return
     setSavingWinner(side)
     setError('')
 
@@ -231,16 +232,16 @@ function KnockoutCard({ match, predictionMap, standingsByGroup, onScoreChange, d
         match={match}
         score={getPredictionScore(predictionMap, match.id)}
         onScoreChange={onScoreChange}
-        disabled={disabled}
+        disabled={isLocked}
         compact
         teams={{ home: homeTeam, away: awayTeam }}
       />
 
       <div className="mt-3 grid grid-cols-2 gap-2">
-        <Button size="sm" variant={winner?.code === homeTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'home'} onClick={() => chooseWinner('home')} disabled={disabled}>
+        <Button size="sm" variant={winner?.code === homeTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'home'} onClick={() => chooseWinner('home')} disabled={isLocked}>
           {homeTeam.code}
         </Button>
-        <Button size="sm" variant={winner?.code === awayTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'away'} onClick={() => chooseWinner('away')} disabled={disabled}>
+        <Button size="sm" variant={winner?.code === awayTeam.code ? 'primary' : 'secondary'} loading={savingWinner === 'away'} onClick={() => chooseWinner('away')} disabled={isLocked}>
           {awayTeam.code}
         </Button>
       </div>

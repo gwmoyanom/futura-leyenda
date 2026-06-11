@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import useStore from '@/store/index.js'
 import { Spinner } from '@/components/ui/index.jsx'
-import { getPredictionsLockCountdown } from '@/utils/date.utils.js'
+import { getPredictionsLockCountdown, isMatchPredictionLocked } from '@/utils/date.utils.js'
 import clsx from 'clsx'
 import GroupStandings from '@/components/participant/GroupStandings.jsx'
 import KnockoutBracket from '@/components/participant/KnockoutBracket.jsx'
@@ -57,9 +57,11 @@ export default function PredictionsPage() {
   async function handleAutoGenerateGroupPredictions() {
     if (isLocked || autoGenerating) return
 
-    const groupMatches = matches.filter(match => match.phase === 'group')
+    const groupMatches = matches.filter(match =>
+      match.phase === 'group' && !isMatchPredictionLocked(match)
+    )
     if (groupMatches.length === 0) {
-      setAutoError('No hay partidos de fase de grupos para generar.')
+      setAutoError('No hay partidos editables de fase de grupos para generar.')
       return
     }
 

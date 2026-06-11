@@ -79,6 +79,17 @@ export function isPredictionLocked(kickoffIso) {
 }
 
 /**
+ * Returns true if an individual match can no longer accept prediction changes.
+ * Live and finished statuses are authoritative because API sync may update
+ * them before local kickoff timing is perfectly aligned.
+ */
+export function isMatchPredictionLocked(match) {
+  if (!match) return false
+  if (match.status === 'live' || match.status === 'finished') return true
+  return isPredictionLocked(match.kickoff)
+}
+
+/**
  * Returns true if the match hasn't started yet
  */
 export function isUpcoming(kickoffIso) {

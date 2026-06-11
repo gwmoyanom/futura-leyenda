@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest'
-import { formatDateLabel, formatKickoffTimeUtc05, groupMatchesByDate } from './date.utils.js'
+import {
+  formatDateLabel,
+  formatKickoffTimeUtc05,
+  groupMatchesByDate,
+  isMatchPredictionLocked,
+} from './date.utils.js'
 
 describe('date utils', () => {
   it('groups matches by the UTC-05 kickoff calendar date', () => {
@@ -25,5 +30,13 @@ describe('date utils', () => {
   it('formats kickoff times in fixed UTC-05', () => {
     expect(formatKickoffTimeUtc05('2026-06-11T15:00:00-06:00')).toBe('16:00')
     expect(formatKickoffTimeUtc05('2026-06-14T13:00:00-05:00')).toBe('13:00')
+  })
+
+  it('locks an individual match once it is live or finished', () => {
+    const futureKickoff = '2099-06-11T15:00:00Z'
+
+    expect(isMatchPredictionLocked({ status: 'upcoming', kickoff: futureKickoff })).toBe(false)
+    expect(isMatchPredictionLocked({ status: 'live', kickoff: futureKickoff })).toBe(true)
+    expect(isMatchPredictionLocked({ status: 'finished', kickoff: futureKickoff })).toBe(true)
   })
 })

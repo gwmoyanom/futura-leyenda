@@ -17,7 +17,7 @@ import {
   formatKickoff,
   formatKickoffTimeUtc05,
   getCountdown,
-  isPredictionLocked,
+  isMatchPredictionLocked,
 } from '@/utils/date.utils.js'
 
 // ─── Status badge ─────────────────────────────────────────────────────────────
@@ -192,7 +192,7 @@ export default function MatchCard({
   onAdminSave,
   compact = false,
 }) {
-  const isLocked = isPredictionLocked(match.kickoff)
+  const isLocked = isMatchPredictionLocked(match)
 
   return (
     <div
