@@ -12,6 +12,7 @@ const API_BASE = 'https://api.football-data.org/v4'
 const CACHE_KEY = 'polla_matches_api_cache'
 const CACHE_EXPIRY = 1000 * 30
 const API_TOKEN = import.meta.env.VITE_FOOTBALL_DATA_API_KEY
+const API_PROXY_URL = import.meta.env.VITE_FOOTBALL_DATA_PROXY_URL
 export const MATCH_SYNC_INTERVAL_MS = Number(import.meta.env.VITE_MATCH_SYNC_INTERVAL_MS || 60000)
 
 /**
@@ -25,19 +26,18 @@ export async function fetchMatchesFromAPI(competitionCode = 'WC', { force = fals
     return cached.data
   }
 
-  const url = `${API_BASE}/competitions/${competitionCode}/matches`
-  const headers = API_TOKEN ? { 'X-Auth-Token': API_TOKEN } : {}
+  const { url, headers, source } = getRequestConfig(competitionCode)
   const response = await fetch(url, { headers })
 
   if (!response.ok) {
     const detail = await readErrorDetail(response)
     throw new Error(
-      `football-data.org respondió ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`
+      `${source} respondió ${response.status} ${response.statusText}${detail ? `: ${detail}` : ''}`
     )
   }
 
   const apiData = await response.json()
-  const matches = normalizeMatches(apiData.matches || [])
+  const matches = normalizeApiMatches(apiData)
 
   setCache(matches)
 
@@ -144,6 +144,45 @@ export function normalizeMatches(apiMatches) {
     minute: match.minute,
     lastUpdated: match.lastUpdated,
   }))
+}
+
+function normalizeApiMatches(apiData) {
+  const matches = Array.isArray(apiData) ? apiData : (apiData.matches || apiData.data || [])
+  if (matches.length === 0) return []
+  if (matches[0]?.apiId) return matches
+  return normalizeMatches(matches)
+}
+
+function getRequestConfig(competitionCode) {
+  if (API_PROXY_URL) {
+    const url = new URL(API_PROXY_URL)
+    url.searchParams.set('competition', competitionCode)
+    return {
+      url: url.toString(),
+      headers: {},
+      source: 'Proxy football-data',
+    }
+  }
+
+  if (!canUseDirectFootballData()) {
+    throw new Error(
+      'La sincronización automática necesita VITE_FOOTBALL_DATA_PROXY_URL en producción. football-data.org bloquea llamadas directas desde GitHub Pages por CORS.'
+    )
+  }
+
+  return {
+    url: `${API_BASE}/competitions/${competitionCode}/matches`,
+    headers: API_TOKEN ? { 'X-Auth-Token': API_TOKEN } : {},
+    source: 'football-data.org',
+  }
+}
+
+function canUseDirectFootballData() {
+  if (import.meta.env.DEV) return true
+  if (typeof window === 'undefined') return true
+
+  const hostname = window.location?.hostname
+  return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === '::1'
 }
 
 function determinatePhase(stage) {
