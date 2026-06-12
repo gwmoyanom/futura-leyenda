@@ -1,7 +1,7 @@
 /**
  * date.utils.js
  *
- * Helpers for match timing logic — deadlines, countdowns, formatting.
+ * Helpers for match timing logic: deadlines, countdowns, formatting.
  * Using date-fns for reliable date math.
  */
 
@@ -132,38 +132,6 @@ export function groupMatchesByDate(matches) {
  */
 export function formatDateLabel(dateKey) {
   return format(parse(dateKey, 'yyyy-MM-dd', new Date()), "EEEE d 'de' MMMM", { locale: es })
-}
-
-/**
- * Returns true if all predictions have been locked (tournament has started)
- * @param {string} inaugurationDateIso - ISO string of tournament start
- */
-export function isAllPredictionsLocked(inaugurationDateIso) {
-  if (!inaugurationDateIso) return false
-  return isPast(new Date(inaugurationDateIso))
-}
-
-/**
- * Returns countdown until predictions lock (tournament inauguration)
- * @param {string} inaugurationDateIso - ISO string of tournament start
- */
-export function getPredictionsLockCountdown(inaugurationDateIso) {
-  if (!inaugurationDateIso) return null
-
-  const now = new Date()
-  const lockDate = new Date(inaugurationDateIso)
-  const totalMinutes = differenceInMinutes(lockDate, now)
-
-  if (totalMinutes <= 0) return null
-
-  const days    = Math.floor(totalMinutes / (60 * 24))
-  const hours   = Math.floor((totalMinutes % (60 * 24)) / 60)
-  const minutes = totalMinutes % 60
-
-  if (days > 7) return `Falta ${days} días para que se cierren las predicciones`
-  if (days > 0) return `${days}d ${hours}h para cierre`
-  if (hours > 0) return `${hours}h ${minutes}m para cierre`
-  return `${minutes}m para cierre`
 }
 
 /**

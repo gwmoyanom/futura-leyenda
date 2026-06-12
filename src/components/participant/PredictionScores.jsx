@@ -178,7 +178,7 @@ function BracketScorePreview({ bracketResults, rules, isLocked }) {
   const champion = bracketResults?.champion
   const statusLabel = isLocked
     ? 'Congelada y pendiente de resultados oficiales'
-    : 'Editable hasta el cierre de predicciones'
+    : 'Editable mientras los partidos estén pendientes'
 
   const preparedRules = [
     {

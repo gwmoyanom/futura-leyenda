@@ -110,15 +110,6 @@ const useStore = create((set, get) => ({
 
   // ─── Predictions slice ────────────────────────────────────────────────────
 
-  /** Check if predictions are currently locked (after inauguration) */
-  isPredictionLocked: () => {
-    const { config } = get()
-    if (!config?.tournament?.inaugurationDate) return false
-
-    const inaugDate = new Date(config.tournament.inaugurationDate)
-    return new Date() > inaugDate
-  },
-
   /** Get matched filtered by phase */
   getMatchesByPhase: (phase) => {
     const { matches } = get()
@@ -143,14 +134,8 @@ const useStore = create((set, get) => ({
 
   /** Save a prediction for the current user */
   savePrediction: async (matchId, prediction) => {
-    const { currentUser, isPredictionLocked, matches } = get()
+    const { currentUser, matches } = get()
     if (!currentUser) return
-
-    // Check if predictions are locked
-    if (isPredictionLocked()) {
-      console.warn('Predictions are locked after tournament inauguration')
-      return null
-    }
 
     const match = matches.find(item => item.id === matchId)
     if (isMatchPredictionLocked(match)) {

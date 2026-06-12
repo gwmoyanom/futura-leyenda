@@ -11,7 +11,7 @@
 import { useState, useEffect } from 'react'
 import useStore from '@/store/index.js'
 import { Spinner } from '@/components/ui/index.jsx'
-import { getPredictionsLockCountdown, isMatchPredictionLocked } from '@/utils/date.utils.js'
+import { isMatchPredictionLocked } from '@/utils/date.utils.js'
 import clsx from 'clsx'
 import GroupStandings from '@/components/participant/GroupStandings.jsx'
 import KnockoutBracket from '@/components/participant/KnockoutBracket.jsx'
@@ -35,7 +35,6 @@ export default function PredictionsPage() {
     getMyPredictions,
     getMyBracketResults,
     getMyScore,
-    isPredictionLocked,
   } = useStore()
 
   useEffect(() => {
@@ -45,17 +44,13 @@ export default function PredictionsPage() {
   const myPredictions = getMyPredictions()
   const myBracketResults = getMyBracketResults()
   const { totalPoints, breakdown } = getMyScore()
-  const isLocked = isPredictionLocked()
-  const lockCountdown = config?.tournament?.inaugurationDate 
-    ? getPredictionsLockCountdown(config.tournament.inaugurationDate)
-    : null
 
   function randomGroupScore() {
     return Math.floor(Math.random() * 3) + 1
   }
 
   async function handleAutoGenerateGroupPredictions() {
-    if (isLocked || autoGenerating) return
+    if (autoGenerating) return
 
     const groupMatches = matches.filter(match =>
       match.phase === 'group' && !isMatchPredictionLocked(match)
@@ -107,7 +102,7 @@ export default function PredictionsPage() {
             MIS PREDICCIONES
           </h1>
           <p className="text-gray-500 text-sm mt-1">
-            Ingresa tus marcadores antes de la inauguración
+            Ingresa tus marcadores antes de que empiece cada partido
           </p>
         </div>
         <div className="text-right">
@@ -116,55 +111,40 @@ export default function PredictionsPage() {
         </div>
       </div>
 
-      {/* Lock warning */}
-      {isLocked && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-start gap-3">
-          <span className="text-2xl">🔒</span>
+      <div className="bg-gold/10 border border-gold/20 rounded-lg p-4 mb-6 flex items-start gap-3">
+        <span className="text-2xl">🔒</span>
+        <div>
+          <p className="font-semibold text-gold-dark">Las predicciones se cierran antes de cada partido</p>
+          <p className="text-sm text-gold-dark/80 mt-1">
+            Puedes seguir editando los partidos pendientes. Cuando un partido empiece, pase a EN VIVO o finalice, ese marcador queda bloqueado.
+          </p>
+        </div>
+      </div>
+
+      <div className="bg-white border border-gold/15 rounded-xl p-4 mb-6 shadow-card">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <p className="font-semibold text-red-900">Predicciones Cerradas</p>
-            <p className="text-sm text-red-700 mt-1">
-              Las predicciones se cerraron al inicio del torneo. Ahora puedes ver resultados.
+            <p className="font-semibold text-navy text-sm">Generador automático</p>
+            <p className="text-xs text-gray-500 mt-1">
+              Rellena solo partidos editables de fase de grupos con marcadores aleatorios del 1 al 3.
             </p>
           </div>
+          <button
+            type="button"
+            onClick={handleAutoGenerateGroupPredictions}
+            disabled={autoGenerating}
+            className="inline-flex items-center justify-center rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-navy shadow-gold-sm transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            {autoGenerating ? 'Generando...' : 'Generar grupos'}
+          </button>
         </div>
-      )}
-
-      {/* Countdown */}
-      {!isLocked && lockCountdown && (
-        <div className="bg-gold/10 border border-gold/20 rounded-lg p-4 mb-6 flex items-start gap-3">
-          <span className="text-2xl">⏰</span>
-          <div>
-            <p className="font-semibold text-gold-dark">{lockCountdown}</p>
-          </div>
-        </div>
-      )}
-
-      {!isLocked && (
-        <div className="bg-white border border-gold/15 rounded-xl p-4 mb-6 shadow-card">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-            <div>
-              <p className="font-semibold text-navy text-sm">Generador automático</p>
-              <p className="text-xs text-gray-500 mt-1">
-                Rellena solo fase de grupos con marcadores aleatorios del 1 al 3.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={handleAutoGenerateGroupPredictions}
-              disabled={autoGenerating}
-              className="inline-flex items-center justify-center rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-navy shadow-gold-sm transition-colors hover:bg-gold-light disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {autoGenerating ? 'Generando...' : 'Generar grupos'}
-            </button>
-          </div>
-          {autoMessage && (
-            <p className="mt-3 text-xs font-medium text-pitch-dark">{autoMessage}</p>
-          )}
-          {autoError && (
-            <p className="mt-3 text-xs font-medium text-live">{autoError}</p>
-          )}
-        </div>
-      )}
+        {autoMessage && (
+          <p className="mt-3 text-xs font-medium text-pitch-dark">{autoMessage}</p>
+        )}
+        {autoError && (
+          <p className="mt-3 text-xs font-medium text-live">{autoError}</p>
+        )}
+      </div>
 
       {/* Main view selector */}
       <div className="flex gap-3 mb-8 overflow-x-auto pb-2">
@@ -195,7 +175,6 @@ export default function PredictionsPage() {
           matches={matches}
           predictions={myPredictions}
           onSave={savePrediction}
-          isLocked={isLocked}
         />
       )}
 
@@ -227,7 +206,6 @@ export default function PredictionsPage() {
             predictions={myPredictions}
             bracketResults={myBracketResults}
             onSave={saveBracketResults}
-            isLocked={isLocked}
           />
         </div>
       )}
@@ -240,7 +218,6 @@ export default function PredictionsPage() {
             breakdown={breakdown}
             rules={config?.rules}
             bracketResults={myBracketResults}
-            isLocked={isLocked}
           />
         </div>
       )}
